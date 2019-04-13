@@ -26,20 +26,20 @@ class TestSAX(unittest.TestCase):
 
   def test_encode_success(self):
       sax = SAX(alpha = 3, symbol_size=3, window_size = 5, paa_size = 3)
-      expected = np.array([["a", "b", "c"], ["a", "b", "c"], ["a", "b", "c"], ["a", "b", "c"], ["a", "b", "c"]])
+      expected = np.array(["abc", "abc", "abc", "abc", "abc"])
       actual = sax.encode(np.array([1,1,1,2,2,2,3,3,3]))
       testing.assert_array_equal(expected, actual)
 
       sax = SAX(alpha = 4, symbol_size=3, window_size = 5, paa_size = 3)
       expected = np.array([
-        ["a", "b", "d"],
-        ["a", "c", "d"],
-        ["a", "c", "d"],
-        ["a", "b", "d"],
-        ["a", "c", "d"],
-        ["a", "c", "d"],
-        ["a", "b", "d"],
-        ["a", "c", "d"]
+        "abd",
+        "acd",
+        "acd",
+        "abd",
+        "acd",
+        "acd",
+        "abd",
+        "acd"
       ])
       actual = sax.encode(np.array([1,1,1,2,2,2,3,3,3,4,4,4]))
       testing.assert_array_equal(expected, actual)

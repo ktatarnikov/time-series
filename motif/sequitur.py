@@ -219,9 +219,6 @@ class Sequitur:
         prev = word[0]
         while word_i < len(word):
             sym = word[word_i]
-            if prev == sym:
-                word_i += 1
-                continue
             self.symbols.add_symbol(sym, word_i)
             digram_sym, begin_symbol = seq.add_terminal(sym, word_i)
             all_occurences = self.digrams.get_occurences(digram_sym)
@@ -230,7 +227,7 @@ class Sequitur:
             else:
                 self.keep_digram_invariant(digram_sym, seq)
             word_i += 1
-        # print(f"last S: {seq.root.sequence()}")
+        print(f"last S: {seq.root.sequence()}")
 
     def keep_digram_invariant(self, digram_sym, seq):
         occurences = self.digrams.get_occurences(digram_sym)

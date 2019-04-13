@@ -15,7 +15,7 @@ class TestSequitur(unittest.TestCase):
       print(seq.get_digrams())
       print(seq.get_digrams_and_occurences())
 
-  def test_encode_success2(self):
+  def test_encode_complex(self):
       seq = Sequitur()
       input = "abcabdabcabd"
       seq.induce([w for w in input])
