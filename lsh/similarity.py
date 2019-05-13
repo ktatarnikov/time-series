@@ -6,23 +6,26 @@ from lsh.minhash import Minhash
 from lsh.hashindex import HashIndex
 
 class TimeSeriesLSH:
-    def __init__(self, W, sigma = 1, shingle_size = 15, hash_tables = 128):
+    def __init__(self, W, sigma = 1, shingle_size = 15, hash_tables = 128, response_variable = 'y', random_seed = 42):
+        np.random.seed(random_seed)
         self.W = W
+        self.R = np.random.rand(W)
         self.sigma = sigma
         self.shingle_size = shingle_size
         self.index = HashIndex(hash_tables = hash_tables)
         self.minhash = Minhash(permutation_count = hash_tables)
+        self.response_variable = response_variable
 
     def fit(self, time_series):
         self.time_series = time_series
         for idx, ts in enumerate(self.time_series):
             shingles = self._series_shingles(ts)
             hash = self._hash_shingles(shingles)
-            self.index.index(ts, hash)
+            self.index.index({ "series": ts, "idx": idx }, hash)
         return self
 
     def _series_shingles(self, series):
-        znorm = StandardScaler().fit_transform(series.values.reshape(-1, 1))
+        znorm = StandardScaler().fit_transform(series[self.response_variable].values.reshape(-1, 1))
         bits = self._series_to_bit_string(znorm.squeeze())
         return self._bits_to_shingles(bits)
 
