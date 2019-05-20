@@ -11,21 +11,19 @@ class TimeSeriesLSHTest(unittest.TestCase):
   def test_to_shingle_str(self):
       hash = TimeSeriesLSH(W = 4, shingle_size = 5)
       input = self.series([0.5, -0.5, 0.5, -0.5, 0.1, -0.9])
-      result = hash._to_shingle_str(input)
+      result = hash._to_shingle_str(input['y'])
       testing.assert_array_equal(int('0b010101', 2), result)
 
   def test_to_shingle_map(self):
       hash = TimeSeriesLSH(W = 4, shingle_size = 3)
       input = self.series([0.5, -0.5, -0.5, 0.1, -0.9])
-      result = hash._bits_to_shingles(input)
+      result = hash._bits_to_shingles(input['y'])
       testing.assert_array_equal([[1, 1], [4, 1], [2, 1]], result)
 
   def test_series_shingles(self):
       hash = TimeSeriesLSH(W = 4, shingle_size = 3, sigma = 1)
       hash.R = np.array([0.5, -0.5, 0.5, -0.5])
-      # index = pd.date_range('1/1/2011', periods=13, freq='m')
       series = self.series([0.5, -0.5, -0.5, 0.1, -0.9, 0.5, 0.4, 0.5, -0.5, 0.5, -0.5, -0.5, 0.1])
-      print(series['y'])
       result = hash._series_shingles(series)
       testing.assert_array_equal([[3, 1], [5, 4], [2, 3]], result)
 
