@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 class TimeseriesHelper:
     def __init__(self, response_variable = 'y', ts_variable = 'timestamp'):
@@ -14,14 +15,15 @@ class TimeseriesHelper:
         plt.plot(metric[self.ts_variable], metric[self.response_variable])
         plt.xticks(rotation='vertical')
 
-    def find_window_discord(self, windows):
+    def find_window_discords(self, windows):
         max_response = 0
         max_window = None
         max_idx = 0
+        mean = pd.concat([w[self.response_variable] for w in windows]).mean()
         for idx, window in enumerate(windows):
-            current_max = window[self.response_variable].max()
-            if current_max > max_response:
-                max_response = current_max
+            abs_max = window[self.response_variable].apply(lambda v: np.abs(v - mean)).max()
+            if abs_max > max_response:
+                max_response = abs_max
                 max_window = window
                 max_idx = idx
         return max_idx, max_window
