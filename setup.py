@@ -26,16 +26,15 @@ setup(
       'pandas==0.24.1',
       'scikit-learn==0.20.2',
       'matplotlib==3.0.2',
-      'tensorflow==1.12.0'
+      'tensorflow==1.12.0',
+      'nb_conda'
   ],
-
   package_data={
       '': ['*.yaml'],
   },
-
+  data_files=[("", ["VERSION"])],
   entry_points={
   },
-
   author="ktatarnikov",
   author_email="ktatarnikov@gmail.com",
   description="TimeSeries",

@@ -27,3 +27,12 @@ class TimeseriesHelper:
                 max_window = window
                 max_idx = idx
         return max_idx, max_window
+
+    def plot_model_history(model_history):
+        plt.plot(model_history['loss'], linewidth=2, label='Train')
+        plt.plot(model_history['val_loss'], linewidth=2, label='Valid')
+        plt.legend(loc='upper right')
+        plt.title('Model loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.show()
