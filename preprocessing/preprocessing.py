@@ -21,11 +21,13 @@ class TimeSeriesPreprocessor:
         self.normalize = normalize
         self.label_shift_seconds = label_shift_seconds
 
-    def make_dataset_from_series_and_labels(self, series, labels = None):
+    def make_dataset_from_series_and_labels(self, series):
+        series = self.clean(series)
+        series = self.impute(series)
         series = self.scale(series)
-        return self.split_into_windows(series, labels)
+        return self.split_into_windows(series)
 
-    def split_into_windows(self, series, labels = None):
+    def split_into_windows(self, series):
         series = series.sort_values(by = self.ts_variable)
         start_date = pd.Timestamp(series[self.ts_variable][0]) - pd.Timedelta(seconds = self.window_shift)
         end_date = pd.Timestamp(series[self.ts_variable][0]) + pd.Timedelta(seconds = self.window_shift)
@@ -43,15 +45,16 @@ class TimeSeriesPreprocessor:
 
             mask = (series[self.ts_variable] >= start_date) & (series[self.ts_variable] < end_date)
             subseries = series.loc[mask].copy()
-            if labels is not None:
-                mask = (labels[self.ts_variable] >= start_date) & (labels[self.ts_variable] < end_date)
-                sublabels = labels.loc[mask].copy()
-                subseries.loc[subseries.index,self.label_variable] = 0
-                subseries[self.label_variable] = sublabels
             result.append(subseries)
         return result
 
     def scale(self, series):
         if self.normalize is not None:
             series[self.response_variable] = (series[self.response_variable] - series[self.response_variable].mean())/series[self.response_variable].std(ddof=0)
+        return series
+
+    def impute(self, series):
+        return series
+
+    def clean(self, series):
         return series
