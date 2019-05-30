@@ -1,3 +1,6 @@
 /lsh/__pycache__
 /motif/__pycache__
 /notebooks/.ipynb_checkpoints
+/logs
+/models/__pycache__
+/preprocessing/__pycache__

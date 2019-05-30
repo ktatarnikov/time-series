@@ -17,16 +17,43 @@ from numpy.random import seed
 
 from tensorflow import set_random_seed
 
-class LSTMParams:
-    def __init__(self, timesteps, n_features, seed = 42):
-        self.seed = seed
-        self.timesteps = timesteps
-        self.n_features = n_features
+class LSTMAutoencoderParams:
+    '''
+    The LSTM Autoencoder parameter holder
 
-class LSTM:
-    def __init__(self, lstm_params, hyper_params, response_var = 'y', timestamp_var = 'ts'):
-        self.response_var = response_var
-        self.timestamp_var = timestamp_var
+    Parameters
+    ----------
+    timesteps_back : int
+        the number of steps back
+
+    timesteps_forward : int
+        the number of time step forward
+
+    n_features : int
+        the number of features
+
+    seed : int
+        random seed
+    '''
+    def __init__(self, timesteps_back, timesteps_forward, n_features, seed):
+        self.seed = seed
+        self.timesteps_back = timesteps_back
+        self.n_features = n_features
+        self.timesteps_forward = timesteps_forward
+
+class LSTMAutoencoder:
+    '''
+    Creates LSTM Autoencoder model with lstm_parameters
+
+    Parameters
+    ----------
+    lstm_params : LSTMAutoencoderParams
+        the lstm configuration
+
+    hyper_params : HyperParams
+        the hyper parameters
+    '''
+    def __init__(self, lstm_params, hyper_params):
         self.lstm_params = lstm_params
         self.hyper_params = hyper_params
         self.model = self._create_model(lstm_params);
@@ -34,31 +61,31 @@ class LSTM:
     def _create_model(self, lstm_params):
         lstm_autoencoder = Sequential()
         # Encoder
-        lstm_autoencoder.add(LSTM(self.lstm_params.timesteps, activation='relu', input_shape=(self.lstm_params.timesteps, self.lstm_params.n_features), return_sequences=True))
+        lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_back, activation='relu', input_shape=(self.lstm_params.timesteps_back, self.lstm_params.n_features), return_sequences=True))
         lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
         lstm_autoencoder.add(LSTM(1, activation='relu'))
-        lstm_autoencoder.add(RepeatVector(self.lstm_params.timesteps))
+        lstm_autoencoder.add(RepeatVector(self.lstm_params.timesteps_forward))
         # Decoder
-        lstm_autoencoder.add(LSTM(timesteps, activation='relu', return_sequences=True))
+        lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_forward, activation='relu', return_sequences=True))
         lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
         lstm_autoencoder.add(TimeDistributed(Dense(self.lstm_params.n_features)))
 
         lstm_autoencoder.summary()
         return lstm_autoencoder
 
-    def fit(self, x_train, x_valid):
-        adam = optimizers.Adam(lr)
+    def fit(self, X_train, X_valid):
+
+        adam = optimizers.Adam(self.hyper_params.learning_rate)
         self.model.compile(loss = 'mse', optimizer = adam)
         checkpoint = ModelCheckpoint(filepath="lstm_autoencoder.h5", save_best_only=True, verbose=0)
         tensor_board = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True)
         model_history = self.model.fit(X_train, X_train,
-                                        epochs = self.hyper_params.epoch_count,
-                                        batch_size = self.hyper_params.batch,
-                                        validation_data = (x_valid, x_valid),
-                                        verbose=2).history
+            epochs = self.hyper_params.epoch_count,
+            batch_size = self.hyper_params.batch_size,
+            validation_data = (X_valid, X_valid),
+            callbacks=[tensor_board],
+            verbose=2).history
+        return model_history
 
-
-
-
-    def transform(self, window):
-        return []
+    def predict(self, X_input):
+        return self.model.predict(X_input)
