@@ -3,21 +3,29 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import date, timedelta as td
-sys.path.append("..")
 from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
+
+# TODO imputation
+# TODO std
 
 class TimeSeriesPreprocessor:
-    def __init__(self, window_size_seconds = 7200, window_shift = 3600, normalize = True, \
-            response_variable = 'y', ts_variable = 'timestamp', label_variable = 'label'):
+    def __init__(self, window_size_seconds = 7200, window_shift = 3600, label_shift_seconds = 300, scaler = StandardScaler(), \
+            normalize = True, response_variable = 'y', ts_variable = 'timestamp', label_variable = 'label'):
         self.window_size_seconds = window_size_seconds
         self.response_variable = response_variable
         self.ts_variable = ts_variable
         self.window_shift = window_shift
         self.label_variable = label_variable
-        self.normalize_response = normalize
+        self.scaler = scaler
+        self.normalize = normalize
+        self.label_shift_seconds = label_shift_seconds
 
-    def make_dataset(self, series, labels):
-        series = self.normalize(series)
+    def make_dataset_from_series_and_labels(self, series, labels = None):
+        series = self.scale(series)
+        return self.split_into_windows(series, labels)
+
+    def split_into_windows(self, series, labels = None):
         series = series.sort_values(by = self.ts_variable)
         start_date = pd.Timestamp(series[self.ts_variable][0]) - pd.Timedelta(seconds = self.window_shift)
         end_date = pd.Timestamp(series[self.ts_variable][0]) + pd.Timedelta(seconds = self.window_shift)
@@ -35,23 +43,15 @@ class TimeSeriesPreprocessor:
 
             mask = (series[self.ts_variable] >= start_date) & (series[self.ts_variable] < end_date)
             subseries = series.loc[mask].copy()
-            mask = (labels[self.ts_variable] >= start_date) & (labels[self.ts_variable] < end_date)
-            sublabels = labels.loc[mask].copy()
-            subseries.loc[subseries.index,self.label_variable] = 0
-            subseries[self.label_variable] = sublabels
+            if labels is not None:
+                mask = (labels[self.ts_variable] >= start_date) & (labels[self.ts_variable] < end_date)
+                sublabels = labels.loc[mask].copy()
+                subseries.loc[subseries.index,self.label_variable] = 0
+                subseries[self.label_variable] = sublabels
             result.append(subseries)
         return result
 
-    def normalize(self, series):
-        if self.normalize_response:
+    def scale(self, series):
+        if self.normalize is not None:
             series[self.response_variable] = (series[self.response_variable] - series[self.response_variable].mean())/series[self.response_variable].std(ddof=0)
         return series
-
-
-    def group_by_hour(self, metric):
-        grouped_by_hour = metric.groupby(
-             [metric['timestamp'].map(lambda x : x.year).rename('year'),
-              metric['timestamp'].map(lambda x : x.month).rename('month'),
-              metric['timestamp'].map(lambda x : x.day).rename('day'),
-              metric['timestamp'].map(lambda x : x.hour).rename('hour')]).count()
-        return grouped_by_hour

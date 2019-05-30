@@ -21,3 +21,8 @@ class TimeseriesHelperTest(unittest.TestCase):
       input2 = make_series([1, 2, 3, -10, 3, 2, 1])
       max_idx, max_window = helper.find_window_discords([input1, input2])
       self.assertEqual(max_idx, 1)
+
+  def test_load_labeled_series(self):
+      helper = TimeseriesHelper()
+      data_frame = helper.load_labeled_series("realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv")
+      testing.assert_array_equal(['timestamp', 'y', 'label'], data_frame.columns)

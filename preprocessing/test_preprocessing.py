@@ -16,7 +16,7 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       label_index = input.iloc[labels_list, 0].index
       labels = make_labels(input, indices = label_index)
 
-      dataset = preprocessor.make_dataset(input, labels)
+      dataset = preprocessor.make_dataset_from_series_and_labels(input, labels)
 
       self.assertEqual(len(dataset), 23)
       total_count = 0
