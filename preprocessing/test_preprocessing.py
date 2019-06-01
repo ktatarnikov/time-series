@@ -17,15 +17,30 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       labels = make_labels(input, indices = label_index)
       input['label'] = labels['label']
 
-      dataset = preprocessor.make_dataset_from_series_and_labels(input)
+      input_variables = ['y']
+      output_variables = ['y', 'label']
 
-      self.assertEqual(len(dataset), 23)
+      dataset = preprocessor.make_dataset_from_series_and_labels(input,
+        input_vars = input_variables, output_vars = output_variables,
+        numeric_vars = ["y"])
+
+      self.assertEqual(len(dataset), 21)
       total_count = 0
       last = 0
       for idx, window in enumerate(dataset):
-          index = (window.index.intersection(labels.timestamp.index))
-          self.assertEqual((window.loc[index]['label'] == 1).sum(), len(label_index.intersection(index)))
-          total_count += (window.loc[index]['label'] == 1).sum()
-          last = index[len(window) - 1]
+          input = window[0]
+          output = window[1]
+          # checking length of input and output
+          self.assertEqual(5, len(input))
+          self.assertEqual(5, len(output))
+
+          testing.assert_array_equal(input_variables, input.columns)
+          testing.assert_array_equal(output_variables, output.columns)
+
+          index = (output.index.intersection(labels.index))
+          self.assertEqual((output.loc[index]['label'] == 1).sum(), len(label_index.intersection(index)))
+
+          total_count += (output.loc[index]['label'] == 1).sum()          
+          last = index[len(output) - 1]
       self.assertEqual(last, 59)
-      self.assertEqual(total_count, 7)
+      self.assertEqual(total_count, 5)
