@@ -10,7 +10,10 @@ from .test_common import make_labels, make_series
 class TimeSeriesPreprocessorTest(unittest.TestCase):
 
   def test_make_dataset(self):
-      preprocessor = TimeSeriesPreprocessor(window_size_seconds = 300, window_shift=150)
+      preprocessor = TimeSeriesPreprocessor(
+            window_size_seconds = 300,
+            window_shift=150,
+            probe_period_seconds = 60)
       labels_list = [0, 1, 30, 45, 59]
       input = make_series([i for i in range(0, 60)])
 
@@ -49,7 +52,11 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       self.assertEqual(total_count, 5)
 
   def test_impute_series(self):
-      preprocessor = TimeSeriesPreprocessor(window_size_seconds = 300, window_shift=150, horizon_shift_seconds=150)
+      preprocessor = TimeSeriesPreprocessor(
+            window_size_seconds = 300,
+            window_shift=150,
+            horizon_shift_seconds=150,
+            probe_period_seconds = 60)
       input_variables = ['y', 'label']
       output_variables = ['y', 'label']
 
@@ -101,6 +108,11 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       input = input.drop(10)
       input = input.drop(11)
       input = input.drop(35)
+
+      input = input.append(input.loc[5].copy(), ignore_index = True)
+      input = input.append(input.loc[27].copy(), ignore_index = True)
+      input.loc[5, 'y'] = 3
+      input.loc[27, 'y'] = 3
 
       windows = preprocessor.make_dataset_from_series_and_labels(
         series = input,

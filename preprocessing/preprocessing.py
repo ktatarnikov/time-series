@@ -61,16 +61,21 @@ class TimeSeriesPreprocessor:
         return series
 
     def time_alignment(self, series, input_variables, output_variables):
-        series.sort_values(self.ts_variable)
-        start_date = pd.Timestamp(series[self.ts_variable][0])
-        end_date = pd.Timestamp(series[self.ts_variable][len(series[self.ts_variable]) - 1])
+        all_vars = list(set(input_variables).union(output_variables))
+
+        series.sort_values(self.ts_variable, inplace=True)
+        start_date = pd.Timestamp(series.iloc[0][self.ts_variable])
+        end_date = pd.Timestamp(series.iloc[series.shape[0] - 1][self.ts_variable])
         half_window_delta = pd.Timedelta(seconds = self.probe_period_seconds/2)
         window_delta = pd.Timedelta(seconds = self.probe_period_seconds)
 
-        current_start = pd.Timestamp(series[self.ts_variable][0]) - half_window_delta
+        current_start = start_date - half_window_delta
         current_end = current_start + window_delta
 
-        num_windows = int((end_date - current_end) / window_delta)
+        nanos_in_second = 1000 * 1000 * 1000
+        total_seconds = int((end_date - current_end).delta / nanos_in_second)
+        num_windows = int(total_seconds / window_delta.seconds)
+
         to_append = []
         for i in range(0, num_windows):
             mask = (series[self.ts_variable] >= current_start) & (series[self.ts_variable] < current_end)
@@ -82,16 +87,24 @@ class TimeSeriesPreprocessor:
                 for var in output_variables:
                     missing_row[var] = np.nan
                 to_append.append(missing_row)
+            elif number_of_rows_in_window > 1:
+                means = series.loc[mask, all_vars].mean(axis = 0)
+                for var in all_vars:
+                    series.loc[mask, var] = means[var]
+                window_index = series.loc[mask].index
+                for idx in range(1, len(window_index)):
+                    series = series.drop(window_index[idx])
             current_start = current_start + window_delta
             current_end = current_end + window_delta
         if len(to_append) > 0:
             series = series.append(to_append, ignore_index=True)
+        # print(series)
         return series
 
     def impute_missing(self, series, input_variables, output_variables, auto_impute):
         missing_values = sum(series[auto_impute].isnull().sum().values)
         if missing_values > 0:
-            series.sort_values(self.ts_variable)
+            series.sort_values(self.ts_variable, inplace=True)
             to_fill = series[auto_impute]
             to_fill.fillna(method='ffill', inplace=True)
             to_fill.fillna(method='bfill', inplace=True)

@@ -29,11 +29,9 @@ class LSTMAutoencoderTest(unittest.TestCase):
       windows = preprocessor.make_dataset_from_series_and_labels(data_frame,
         input_vars = input_variables, output_vars = output_variables,
         numeric_vars = ["y"], auto_impute= ["y", 'label'])
-      input_shape = (24, 2)
-      output_shape = (12, 2)
 
-      input = np.stack([w[0].to_numpy() for w in windows if input_shape == w[0].to_numpy().shape])
-      output = np.stack([w[1].to_numpy() for w in windows if output_shape == w[1].to_numpy().shape])
+      input = np.stack([w[0].to_numpy() for w in windows])
+      output = np.stack([w[1].to_numpy() for w in windows])
 
       n_in_features = len(input_variables)
       n_out_features = len(output_variables)
@@ -41,7 +39,7 @@ class LSTMAutoencoderTest(unittest.TestCase):
       timesteps_forward = output.shape[1]
       seed = 42
       epoch_count = 1000
-      learning_rate = 0.001
+      learning_rate = 0.0005
       batch_size = 128
       train_test_split_ratio = 0.2
       train_valid_split_ratio = 0.3
