@@ -4,6 +4,7 @@ import numpy as np
 from numpy import testing
 import pandas as pd
 from .preprocessing import TimeSeriesPreprocessor
+from .helper import TimeseriesHelper
 from .test_common import make_labels, make_series
 
 class TimeSeriesPreprocessorTest(unittest.TestCase):
@@ -46,3 +47,34 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
           last = index[len(output) - 1]
       self.assertEqual(last, 59)
       self.assertEqual(total_count, 5)
+
+  def test_impute_series(self):
+      preprocessor = TimeSeriesPreprocessor(window_size_seconds = 300, window_shift=150, horizon_shift_seconds=150)
+      input_variables = ['y', 'label']
+      output_variables = ['y', 'label']
+
+      helper = TimeseriesHelper()
+
+      input = make_series([i for i in range(0, 60)])
+
+      labels_list = [0, 15, 30, 45, 59]
+      label_index = input.iloc[labels_list, 0].index
+      labels = make_labels(input, indices = label_index)
+      input['label'] = labels['label']
+
+      input_variables = ['y']
+      output_variables = ['y', 'label']
+
+      input.loc[[10, 11, 20, 40], 'y'] = np.nan
+
+      windows = preprocessor.make_dataset_from_series_and_labels(
+        series = input,
+        input_vars = input_variables,
+        output_vars = output_variables,
+        numeric_vars = ["y"],
+        auto_impute = ["y"])
+
+      self.assertEqual(len(windows), 22)
+      for w in windows:
+          self.assertEqual(0, w[0].isnull().sum()[0])
+          self.assertEqual(0, w[1].isnull().sum()[0])

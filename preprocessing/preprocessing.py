@@ -17,9 +17,9 @@ class TimeSeriesPreprocessor:
         self.scaler = scaler
         self.horizon_shift_seconds = horizon_shift_seconds
 
-    def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars):
-        series = self.clean(series, input_vars, output_vars)
-        series = self.impute(series, input_vars, output_vars)
+    def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars, auto_impute = []):
+        series = self.clean(series, input_vars, output_vars, auto_impute)
+        series = self.impute(series, input_vars, output_vars, auto_impute)
         series = self.scale(series, numeric_vars)
         return self.split_into_windows(series, input_vars, output_vars)
 
@@ -55,8 +55,16 @@ class TimeSeriesPreprocessor:
             series[numeric_vars] = (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 
-    def impute(self, series, input_variables, output_variables):
+    def impute(self, series, input_variables, output_variables, auto_impute):
+        # series.groupby(self.ts_variable)
         return series
 
-    def clean(self, series, input_variables, output_variables):
+    def clean(self, series, input_variables, output_variables, auto_impute):
+        missing_values = sum(series[auto_impute].isnull().sum().values)
+        if missing_values > 0:
+            series.sort_values(self.ts_variable)
+            to_fill = series[auto_impute]
+            to_fill.fillna(method='ffill', inplace=True)
+            to_fill.fillna(method='bfill', inplace=True)
+            series[auto_impute] = to_fill
         return series
