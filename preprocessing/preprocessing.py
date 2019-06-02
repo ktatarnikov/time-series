@@ -7,8 +7,6 @@ from datetime import date, timedelta as td
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
-# TODO imputation
-
 class TimeSeriesPreprocessor:
     def __init__(self,
             window_size_seconds = 7200,
