@@ -79,7 +79,7 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
           self.assertEqual(0, w[0].isnull().sum()[0])
           self.assertEqual(0, w[1].isnull().sum()[0])
 
-  def test_align_in_time(self):
+  def test_time_alignment(self):
 
       input_variables = ['y', 'label']
       output_variables = ['y', 'label']

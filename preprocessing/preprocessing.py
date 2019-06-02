@@ -23,7 +23,7 @@ class TimeSeriesPreprocessor:
         self.horizon_shift_seconds = horizon_shift_seconds
 
     def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars, auto_impute = []):
-        series = self.align_in_time(series, input_vars, output_vars)
+        series = self.time_alignment(series, input_vars, output_vars)
         series = self.impute_missing(series, input_vars, output_vars, auto_impute)
         series = self.scale(series, numeric_vars)
         return self.split_into_windows(series, input_vars, output_vars)
@@ -60,8 +60,7 @@ class TimeSeriesPreprocessor:
             series[numeric_vars] = (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 
-    def align_in_time(self, series, input_variables, output_variables):
-
+    def time_alignment(self, series, input_variables, output_variables):
         series.sort_values(self.ts_variable)
         start_date = pd.Timestamp(series[self.ts_variable][0])
         end_date = pd.Timestamp(series[self.ts_variable][len(series[self.ts_variable]) - 1])

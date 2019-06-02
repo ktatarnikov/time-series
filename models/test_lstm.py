@@ -20,11 +20,15 @@ class LSTMAutoencoderTest(unittest.TestCase):
       # data_frame = helper.load_labeled_series("realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv")
       data_frame = helper.load_labeled_series("realKnownCause/ec2_request_latency_system_failure.csv")
 
-      preprocessor = TimeSeriesPreprocessor(window_size_seconds = 7200, window_shift = 3600, horizon_shift_seconds = 3600)
+      preprocessor = TimeSeriesPreprocessor(
+            window_size_seconds = 7200,
+            window_shift = 3600,
+            horizon_shift_seconds = 3600,
+            probe_period_seconds = 300)
 
       windows = preprocessor.make_dataset_from_series_and_labels(data_frame,
         input_vars = input_variables, output_vars = output_variables,
-        numeric_vars = ["y"])
+        numeric_vars = ["y"], auto_impute= ["y", 'label'])
       input_shape = (24, 2)
       output_shape = (12, 2)
 
