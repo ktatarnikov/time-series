@@ -98,7 +98,6 @@ class TimeSeriesPreprocessor:
             current_end = current_end + window_delta
         if len(to_append) > 0:
             series = series.append(to_append, ignore_index=True)
-        # print(series)
         return series
 
     def impute_missing(self, series, input_variables, output_variables, auto_impute):
