@@ -78,3 +78,42 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       for w in windows:
           self.assertEqual(0, w[0].isnull().sum()[0])
           self.assertEqual(0, w[1].isnull().sum()[0])
+
+  def test_align_in_time(self):
+
+      input_variables = ['y', 'label']
+      output_variables = ['y', 'label']
+      probe_period_seconds = 60
+
+      preprocessor = TimeSeriesPreprocessor(
+        window_size_seconds = 300,
+        window_shift=120,
+        horizon_shift_seconds=120,
+        probe_period_seconds = probe_period_seconds)
+
+      input = make_series([i for i in range(0, 60)])
+
+      labels_list = [0, 15, 30, 45, 59]
+      label_index = input.iloc[labels_list, 0].index
+      labels = make_labels(input, indices = label_index)
+      input['label'] = labels['label']
+
+      input = input.drop(10)
+      input = input.drop(11)
+      input = input.drop(35)
+
+      windows = preprocessor.make_dataset_from_series_and_labels(
+        series = input,
+        input_vars = input_variables,
+        output_vars = output_variables,
+        numeric_vars = ["y"],
+        auto_impute = ["y", "label"])
+
+      self.assertEqual(16, len(windows))
+      for input_and_output in windows:
+          input = input_and_output[0]
+          output = input_and_output[1]
+          self.assertEqual(0, input.isnull().sum()[0])
+          self.assertEqual(0, output.isnull().sum()[0])
+          self.assertEqual(8, input.count().sum())
+          self.assertEqual(4, output.count().sum())

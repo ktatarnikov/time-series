@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from datetime import date, timedelta as td
 from sklearn import preprocessing
@@ -9,17 +10,23 @@ from sklearn.preprocessing import StandardScaler
 # TODO imputation
 
 class TimeSeriesPreprocessor:
-    def __init__(self, window_size_seconds = 7200, window_shift = 3600, horizon_shift_seconds = 300, scaler = StandardScaler(), \
+    def __init__(self,
+            window_size_seconds = 7200,
+            window_shift = 3600,
+            horizon_shift_seconds = 300,
+            scaler = StandardScaler(),
+            probe_period_seconds = 300,
             ts_variable = 'timestamp'):
         self.window_size_seconds = window_size_seconds
         self.ts_variable = ts_variable
         self.window_shift = window_shift
         self.scaler = scaler
+        self.probe_period_seconds = probe_period_seconds
         self.horizon_shift_seconds = horizon_shift_seconds
 
     def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars, auto_impute = []):
-        series = self.clean(series, input_vars, output_vars, auto_impute)
-        series = self.impute(series, input_vars, output_vars, auto_impute)
+        series = self.align_in_time(series, input_vars, output_vars)
+        series = self.impute_missing(series, input_vars, output_vars, auto_impute)
         series = self.scale(series, numeric_vars)
         return self.split_into_windows(series, input_vars, output_vars)
 
@@ -55,11 +62,36 @@ class TimeSeriesPreprocessor:
             series[numeric_vars] = (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 
-    def impute(self, series, input_variables, output_variables, auto_impute):
-        # series.groupby(self.ts_variable)
+    def align_in_time(self, series, input_variables, output_variables):
+
+        series.sort_values(self.ts_variable)
+        start_date = pd.Timestamp(series[self.ts_variable][0])
+        end_date = pd.Timestamp(series[self.ts_variable][len(series[self.ts_variable]) - 1])
+        half_window_delta = pd.Timedelta(seconds = self.probe_period_seconds/2)
+        window_delta = pd.Timedelta(seconds = self.probe_period_seconds)
+
+        current_start = pd.Timestamp(series[self.ts_variable][0]) - half_window_delta
+        current_end = current_start + window_delta
+
+        num_windows = int((end_date - current_end) / window_delta)
+        to_append = []
+        for i in range(0, num_windows):
+            mask = (series[self.ts_variable] >= current_start) & (series[self.ts_variable] < current_end)
+            number_of_rows_in_window = series.loc[mask].shape[0]
+            if number_of_rows_in_window == 0:
+                missing_row = {self.ts_variable: current_start + half_window_delta}
+                for var in input_variables:
+                    missing_row[var] = np.nan
+                for var in output_variables:
+                    missing_row[var] = np.nan
+                to_append.append(missing_row)
+            current_start = current_start + window_delta
+            current_end = current_end + window_delta
+        if len(to_append) > 0:
+            series = series.append(to_append, ignore_index=True)
         return series
 
-    def clean(self, series, input_variables, output_variables, auto_impute):
+    def impute_missing(self, series, input_variables, output_variables, auto_impute):
         missing_values = sum(series[auto_impute].isnull().sum().values)
         if missing_values > 0:
             series.sort_values(self.ts_variable)
