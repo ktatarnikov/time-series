@@ -20,8 +20,10 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
       input_variables = ['y']
       output_variables = ['y', 'label']
 
-      dataset = preprocessor.make_dataset_from_series_and_labels(input,
-        input_vars = input_variables, output_vars = output_variables,
+      dataset = preprocessor.make_dataset_from_series_and_labels(
+        series = input,
+        input_vars = input_variables,
+        output_vars = output_variables,
         numeric_vars = ["y"])
 
       self.assertEqual(len(dataset), 21)
@@ -40,7 +42,7 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
           index = (output.index.intersection(labels.index))
           self.assertEqual((output.loc[index]['label'] == 1).sum(), len(label_index.intersection(index)))
 
-          total_count += (output.loc[index]['label'] == 1).sum()          
+          total_count += (output.loc[index]['label'] == 1).sum()
           last = index[len(output) - 1]
       self.assertEqual(last, 59)
       self.assertEqual(total_count, 5)

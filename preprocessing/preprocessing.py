@@ -10,12 +10,11 @@ from sklearn.preprocessing import StandardScaler
 
 class TimeSeriesPreprocessor:
     def __init__(self, window_size_seconds = 7200, window_shift = 3600, horizon_shift_seconds = 300, scaler = StandardScaler(), \
-            normalize = True, ts_variable = 'timestamp'):
+            ts_variable = 'timestamp'):
         self.window_size_seconds = window_size_seconds
         self.ts_variable = ts_variable
         self.window_shift = window_shift
         self.scaler = scaler
-        self.normalize = normalize
         self.horizon_shift_seconds = horizon_shift_seconds
 
     def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars):
@@ -52,7 +51,7 @@ class TimeSeriesPreprocessor:
         return result
 
     def scale(self, series, numeric_vars):
-        if self.normalize is not None:
+        if self.scaler is not None:
             series[numeric_vars] = (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 

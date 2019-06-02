@@ -29,16 +29,20 @@ class LSTMAutoencoderParams:
     timesteps_forward : int
         the number of time step forward
 
-    n_features : int
-        the number of features
+    n_in_features : int
+        the number of input features
+
+    n_output_features : int
+        the number of output features
 
     seed : int
         random seed
     '''
-    def __init__(self, timesteps_back, timesteps_forward, n_features, seed):
+    def __init__(self, timesteps_back, timesteps_forward, n_in_features, n_out_features, seed):
         self.seed = seed
         self.timesteps_back = timesteps_back
-        self.n_features = n_features
+        self.n_in_features = n_in_features
+        self.n_out_features = n_out_features
         self.timesteps_forward = timesteps_forward
 
 class LSTMAutoencoder:
@@ -61,28 +65,28 @@ class LSTMAutoencoder:
     def _create_model(self, lstm_params):
         lstm_autoencoder = Sequential()
         # Encoder
-        lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_back, activation='relu', input_shape=(self.lstm_params.timesteps_back, self.lstm_params.n_features), return_sequences=True))
+        lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_back, activation='relu', input_shape=(self.lstm_params.timesteps_back, self.lstm_params.n_in_features), return_sequences=True))
         lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
         lstm_autoencoder.add(LSTM(1, activation='relu'))
         lstm_autoencoder.add(RepeatVector(self.lstm_params.timesteps_forward))
         # Decoder
         lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_forward, activation='relu', return_sequences=True))
         lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
-        lstm_autoencoder.add(TimeDistributed(Dense(self.lstm_params.n_features)))
+        lstm_autoencoder.add(TimeDistributed(Dense(self.lstm_params.n_out_features)))
 
         lstm_autoencoder.summary()
         return lstm_autoencoder
 
-    def fit(self, X_train, X_valid):
+    def fit(self, X_train, y_train, X_valid, y_valid):
 
         adam = optimizers.Adam(self.hyper_params.learning_rate)
         self.model.compile(loss = 'mse', optimizer = adam)
         checkpoint = ModelCheckpoint(filepath="lstm_autoencoder.h5", save_best_only=True, verbose=0)
         tensor_board = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True)
-        model_history = self.model.fit(X_train, X_train,
+        model_history = self.model.fit(X_train, y_train,
             epochs = self.hyper_params.epoch_count,
             batch_size = self.hyper_params.batch_size,
-            validation_data = (X_valid, X_valid),
+            validation_data = (X_valid, y_valid),
             callbacks=[tensor_board],
             verbose=2).history
         return model_history
