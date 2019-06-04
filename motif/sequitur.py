@@ -227,7 +227,7 @@ class Sequitur:
             else:
                 self.keep_digram_invariant(digram_sym, seq)
             word_i += 1
-        print(f"last S: {seq.root.sequence()}")
+        # print(f"last S: {seq.root.sequence()}")
 
     def keep_digram_invariant(self, digram_sym, seq):
         occurences = self.digrams.get_occurences(digram_sym)
