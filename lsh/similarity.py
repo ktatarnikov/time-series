@@ -5,6 +5,9 @@ from lsh.minhash import sha1_hash32
 from lsh.minhash import Minhash
 from lsh.hashindex import HashIndex
 
+class TimeSeriesLSHException(Exception):
+    pass
+
 class TimeSeriesLSH:
     '''
     Time series hashing algorithm based on the following paper:
@@ -37,7 +40,7 @@ class TimeSeriesLSH:
         self.minhash = Minhash(permutation_count = hash_tables)
         self.response_variable = response_variable
 
-    """fit function that perform indexing of timeseries.
+    """Fit function that perform indexing of timeseries.
     Args:
         time_series: the array of timeseries pandas frames
     Returns:
@@ -93,18 +96,30 @@ class TimeSeriesLSH:
             arr.append([key, value])
         return arr
 
-    """Converts shingle window into compact bit string. (Assuming the shingle window is less than 32 characters)
+    """Converts shingle window into compact bit string. (Assuming the shingle window is less than 32)
     Args:
-        shingle_window: TBD
+        shingle_window: window of [1, -1, -1, ... ]
     Returns:
-        integer value
+        integer value keeping bit representation of the shingle window where
+        bit set to 1 if the corresponding value in the shingle window is >= 0,
+        or set to 0 - otherwise
     """
     def _to_shingle_str(self, shingle_window):
+        if len(shingle_window) > 32:
+            raise TimeSeriesLSHException("Expected shingle window of size < 32")
         result = 0
         for idx, c in enumerate(shingle_window):
             result = self.set_bit(result, idx, c >= 0)
         return result
 
+    """Set the index:th bit of v to 1 if x is truthy, else to 0, and return the new value.
+    Args:
+        value: the value where bit is set
+        index: index of the bit
+        x: bit value
+    Returns:
+        integer value with bit set
+    """
     def set_bit(self, value, index, x):
         """Set the index:th bit of v to 1 if x is truthy, else to 0, and return the new value."""
         mask = 1 << index   # Compute mask, an integer with just bit 'index' set.
@@ -113,9 +128,21 @@ class TimeSeriesLSH:
             value |= mask # If x was True, set the bit indicated by the mask.
         return value
 
+    """Calculates LSH value using consistent weighted sampling schema.
+    Args:
+        singles: list of pairs [shingle, occurence_count]
+    Returns:
+        np array of hash pairs
+    """
     def _hash_shingles(self, shingles):
         return self.minhash.weighted_minhash(shingles, np.power(2, self.shingle_size))
 
+    """Query similar time series using weighted jaccard similarity
+    Args:
+        query: pandas frame with time series
+    Returns:
+        a list of objects {"object": series, "similarity": similarity}
+    """
     def query(self, query):
         query_shingles = self._series_shingles(query)
         query_hash = self._hash_shingles(query_shingles)
