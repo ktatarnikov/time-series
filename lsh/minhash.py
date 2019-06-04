@@ -3,7 +3,7 @@ import sys
 import hashlib
 import math
 import struct
-from lsh.weighted_minhash import WeightedMinHashGenerator
+from lsh.cws import ConsistentWeightedSampling
 
 _mersenne_prime = (1 << 61) - 1
 _max_hash = (1 << 32) - 1
@@ -22,6 +22,15 @@ def sha1_hash32(data):
     return struct.unpack('<I', hashlib.sha1(data).digest()[:4])[0]
 
 class Minhash:
+    '''
+    Minhash
+
+    Parameters
+    ----------
+    permutation_count : int
+        the number of hashtables in the index
+
+    '''
     def __init__(self, permutation_count = 128, hashfunc = sha1_hash32, seed = 42):
         self.seed = seed
         self.permutation_count = permutation_count
@@ -51,18 +60,12 @@ class Minhash:
     def hash(self, value):
         return self.hashfunc(self._encode_string(value))
 
-    def _encode_string(self, value):
-        if isinstance(value, str):
-            return value.encode("utf-8")
-        else:
-            return value
-
     def weighted_minhash(self, weighted_values, dim):
-        generator = WeightedMinHashGenerator(dim)
+        sampler = ConsistentWeightedSampling(dim)
         weights = np.array(weighted_values)
-        dense_array = np.zeros(dim, dtype=np.float64)
+        dense_array = np.zeros(dim, dtype = np.float64)
         dense_array[weights[:,0]] = weights[:,1]
-        return generator.minhash(dense_array)
+        return sampler.hash(dense_array)
 
     def jaccard_weighted(self, values, other):
         # Check how many pairs of (k, t) hashvalues are equal
@@ -71,3 +74,9 @@ class Minhash:
             if np.array_equal(this, that):
                 intersection += 1
         return float(intersection) / float(len(values))
+
+    def _encode_string(self, value):
+        if isinstance(value, str):
+            return value.encode("utf-8")
+        else:
+            return value

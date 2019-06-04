@@ -6,6 +6,27 @@ from lsh.minhash import Minhash
 from lsh.hashindex import HashIndex
 
 class TimeSeriesLSH:
+    '''
+    Time series hashing algorithm based on the following paper:
+
+    [NIPS Time Series Workshop 2016] SSH (Sketch, Shingle, & Hash) for Indexing Massive-Scale Time Series.
+    by Chen Luo, Anshumali Shrivastava (https://arxiv.org/abs/1610.07328)
+
+    Parameters
+    ----------
+    W : int
+        the number of hashtables in the index
+    sigma : int
+        sliding window step
+    shingle_size: int
+        the size of shingle
+    hash_tables: int
+        the number of hash tables in the hash
+    response_variables: _encode_string
+        the name of response variable column
+    random_seed: int
+        the random seed
+    '''
     def __init__(self, W, sigma = 1, shingle_size = 15, hash_tables = 128, response_variable = 'y', random_seed = 42):
         np.random.seed(random_seed)
         self.W = W
@@ -16,26 +37,49 @@ class TimeSeriesLSH:
         self.minhash = Minhash(permutation_count = hash_tables)
         self.response_variable = response_variable
 
+    """fit function that perform indexing of timeseries.
+    Args:
+        time_series: the array of timeseries pandas frames
+    Returns:
+        None
+    """
     def fit(self, time_series):
-        self.time_series = time_series
-        for idx, ts in enumerate(self.time_series):
+        for idx, ts in enumerate(time_series):
             shingles = self._series_shingles(ts)
             hash = self._hash_shingles(shingles)
             self.index.index({ "series": ts, "idx": idx }, hash)
-        return self
 
+    """Makes shingles out of pandas frame
+    Args:
+        series: pandas frame with time series
+    Returns:
+        list of shingles
+    """
     def _series_shingles(self, series):
         znorm = StandardScaler().fit_transform(series[self.response_variable].values.reshape(-1, 1))
         bits = self._series_to_bit_string(znorm.squeeze())
         return self._bits_to_shingles(bits)
 
+    """Makes a list of bit strings from timeseries.
+    Args:
+        series: extracts from time series list of bit strings
+    Returns:
+        list of bit strings
+    """
     def _series_to_bit_string(self, series):
-        B = []
+        result = []
         for i in range(0, len(series) - self.W + 1, self.sigma):
             window = series[i : (i + self.W)]
-            B.append(np.sign(window.dot(self.R)))
-        return B
+            result.append(np.sign(window.dot(self.R)))
+        return result
 
+    """Makes a weighted list of shingles out of list of bit strings by dedublicating the elements in the list.
+       This is analogous to getting the frequencies of words from the document.
+    Args:
+        bits: extracts from time series list of bit strings
+    Returns:
+        list of pairs [shingle, occurence_count]
+    """
     def _bits_to_shingles(self, bits):
         result = {}
         for i in range(0, len(bits) - self.shingle_size + 1, 1):
@@ -49,6 +93,12 @@ class TimeSeriesLSH:
             arr.append([key, value])
         return arr
 
+    """Converts shingle window into compact bit string. (Assuming the shingle window is less than 32 characters)
+    Args:
+        shingle_window: TBD
+    Returns:
+        integer value
+    """
     def _to_shingle_str(self, shingle_window):
         result = 0
         for idx, c in enumerate(shingle_window):
@@ -60,7 +110,7 @@ class TimeSeriesLSH:
         mask = 1 << index   # Compute mask, an integer with just bit 'index' set.
         value &= ~mask          # Clear the bit indicated by the mask (if x is False)
         if x:
-            value |= mask         # If x was True, set the bit indicated by the mask.
+            value |= mask # If x was True, set the bit indicated by the mask.
         return value
 
     def _hash_shingles(self, shingles):
@@ -69,7 +119,7 @@ class TimeSeriesLSH:
     def query(self, query):
         query_shingles = self._series_shingles(query)
         query_hash = self._hash_shingles(query_shingles)
-        similar_items = self.index.query_all(query_hash)
+        similar_items = self.index.query(query_hash)
         result = []
         for value in similar_items:
             series = value["object"]
