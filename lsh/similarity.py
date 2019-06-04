@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import norm
 from sklearn.preprocessing import StandardScaler
-from lsh.minhash import sha1_hash32
 from lsh.minhash import Minhash
 from lsh.hashindex import HashIndex
 

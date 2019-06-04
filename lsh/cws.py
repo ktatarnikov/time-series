@@ -35,7 +35,7 @@ class ConsistentWeightedSampling(object):
     Args:
         input: the vector of weights
     Returns:
-        np array of min hash pairs
+        np array of weighted min hash pairs
     """
     def hash(self, input):
         if not len(input) == self.dimension:

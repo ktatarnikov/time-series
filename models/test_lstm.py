@@ -38,7 +38,7 @@ class LSTMAutoencoderTest(unittest.TestCase):
       timesteps_back = input.shape[1]
       timesteps_forward = output.shape[1]
       seed = 42
-      epoch_count = 1000
+      epoch_count = 10
       learning_rate = 0.0005
       batch_size = 128
       train_test_split_ratio = 0.2
@@ -52,3 +52,8 @@ class LSTMAutoencoderTest(unittest.TestCase):
       hyper_params = HyperParams(epoch_count = epoch_count, learning_rate = learning_rate, batch_size = batch_size)
       lstm = LSTMAutoencoder(lstm_params = lstm_params, hyper_params = hyper_params)
       lstm.fit(X_train, y_train, X_valid, y_valid)
+
+      Y_pred = lstm.predict(X_test)
+
+      
+      print(Y_pred)

@@ -5,21 +5,8 @@ import math
 import struct
 from lsh.cws import ConsistentWeightedSampling
 
-_mersenne_prime = (1 << 61) - 1
-_max_hash = (1 << 32) - 1
-_hash_range = (1 << 32)
-
 class MinhashError(Exception):
     pass
-
-def sha1_hash32(data):
-    """A 32-bit hash function based on SHA1.
-    Args:
-        data (bytes): the data to generate 32-bit integer hash from.
-    Returns:
-        int: an integer hash value that can be encoded using 32 bits.
-    """
-    return struct.unpack('<I', hashlib.sha1(data).digest()[:4])[0]
 
 class Minhash:
     '''
@@ -29,16 +16,20 @@ class Minhash:
     ----------
     permutation_count : int
         the number of hashtables in the index
-
+    seed: int
+        random seed
     '''
-    def __init__(self, permutation_count = 128, hashfunc = sha1_hash32, seed = 42):
+    def __init__(self, permutation_count = 128, seed = 42):
         self.seed = seed
+        self.hash_prime = (1 << 61) - 1
+        self.max_hash = (1 << 32) - 1
+        self.hash_range = (1 << 32)
+
         self.permutation_count = permutation_count
-        self.hashfunc = hashfunc
         generator = np.random.RandomState(self.seed)
         self.permutations = np.array(
-            [(generator.randint(1, _mersenne_prime, dtype=np.uint64),
-              generator.randint(0, _mersenne_prime, dtype=np.uint64)) for _ in range(self.permutation_count)],
+            [(generator.randint(1, self.hash_prime, dtype=np.uint64),
+              generator.randint(0, self.hash_prime, dtype=np.uint64)) for _ in range(self.permutation_count)],
               dtype=np.uint64).T
 
     def jaccard(self, values1, values2):
@@ -47,23 +38,20 @@ class Minhash:
         return np.float(np.count_nonzero(values1 == values2)) / np.float(len(values1))
 
     def minhash_values(self, values):
-        result = np.ones(self.permutation_count, dtype = np.uint64) * _max_hash
+        result = np.ones(self.permutation_count, dtype = np.uint64) * self.max_hash
         for value in values:
             result = np.minimum(result, self.minhash_value(value))
         return result
 
     def minhash_value(self, value):
-        hash = self.hash(value)
+        hash = self._sha_hash(self._encode_string(value))
         a, b = self.permutations
-        return np.bitwise_and((a * hash + b) % _mersenne_prime, np.uint64(_max_hash))
+        return np.bitwise_and((a * hash + b) % self.hash_prime, np.uint64(self.max_hash))
 
-    def hash(self, value):
-        return self.hashfunc(self._encode_string(value))
-
-    def weighted_minhash(self, weighted_values, dim):
-        sampler = ConsistentWeightedSampling(dim)
+    def weighted_minhash(self, weighted_values, dimension):
+        sampler = ConsistentWeightedSampling(dimension = dimension, seed = self.seed)
         weights = np.array(weighted_values)
-        dense_array = np.zeros(dim, dtype = np.float64)
+        dense_array = np.zeros(dimension, dtype = np.float64)
         dense_array[weights[:,0]] = weights[:,1]
         return sampler.hash(dense_array)
 
@@ -80,3 +68,12 @@ class Minhash:
             return value.encode("utf-8")
         else:
             return value
+
+    def _sha_hash(self, data):
+        """A 32-bit hash function based on SHA1.
+        Args:
+            data (bytes): the data to generate 32-bit integer hash from.
+        Returns:
+            int: an integer hash value that can be encoded using 32 bits.
+        """
+        return struct.unpack('<I', hashlib.sha1(data).digest()[:4])[0]
