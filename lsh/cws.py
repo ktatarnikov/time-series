@@ -31,13 +31,13 @@ class ConsistentWeightedSampling(object):
         self.ln_cgamma = np.log(generator.gamma(2, 1, (sample_size, dimension))).astype(np.float32)
         self.beta_uniform = generator.uniform(0, 1, (sample_size, dimension)).astype(np.float32)
 
-    """Calculates weighted minhash.
-    Args:
-        input: the vector of weights
-    Returns:
-        np array of weighted min hash pairs
-    """
     def hash(self, input):
+        """Calculates weighted minhash.
+        Args:
+            input: the vector of weights
+        Returns:
+            np array of weighted min hash pairs
+        """
         if not len(input) == self.dimension:
             raise ConsistentWeightedSamplingError(f"Expecting the array of size {self.dimension}.")
         hashvalues = np.zeros((self.sample_size, 2), dtype = np.int)

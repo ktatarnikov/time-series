@@ -55,5 +55,5 @@ class LSTMAutoencoderTest(unittest.TestCase):
 
       Y_pred = lstm.predict(X_test)
 
-      
+
       print(Y_pred)

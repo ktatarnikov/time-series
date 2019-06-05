@@ -6,20 +6,20 @@ from .minhash import Minhash
 class MinhashTest(unittest.TestCase):
     def test_different_objects(self):
         minhash = Minhash()
-        hashes1 = minhash.minhash_values(["10", "11", "12", "13", "14", "15"])
-        hashes2 = minhash.minhash_values(["26", "27", "28", "29", "30", "31"])
+        hashes1 = minhash.minhash(["10", "11", "12", "13", "14", "15"])
+        hashes2 = minhash.minhash(["26", "27", "28", "29", "30", "31"])
         testing.assert_array_equal(0, minhash.jaccard(hashes1, hashes2))
 
     def test_different_objects(self):
         minhash = Minhash()
-        hashes1 = minhash.minhash_values(["10", "11", "12", "13", "14", "15"])
-        hashes2 = minhash.minhash_values(["13", "14", "15", "29", "30", "31"])
+        hashes1 = minhash.minhash(["10", "11", "12", "13", "14", "15"])
+        hashes2 = minhash.minhash(["13", "14", "15", "29", "30", "31"])
         testing.assert_array_equal(0.3125, minhash.jaccard(hashes1, hashes2))
 
     def test_the_same_objects(self):
         minhash = Minhash()
-        hashes1 = minhash.minhash_values(["10", "11", "12", "13", "14", "15"])
-        hashes2 = minhash.minhash_values(["10", "11", "12", "13", "14", "15"])
+        hashes1 = minhash.minhash(["10", "11", "12", "13", "14", "15"])
+        hashes2 = minhash.minhash(["10", "11", "12", "13", "14", "15"])
         testing.assert_array_equal(1.0, minhash.jaccard(hashes1, hashes2))
 
     # def test_weighted_different_objects(self):
@@ -56,8 +56,8 @@ class MinhashTest(unittest.TestCase):
     #     hashes2 = minhash.minhash_values(["10", "11", "12", "13", "14", "15"])
     #     testing.assert_array_equal(1.0, minhash.jaccard(hashes1, hashes2))
 
-    def test_weighted_the_same_objects_differnt_weights(self):
+    def test_weighted_the_same_objects_different_weights(self):
         minhash = Minhash()
         hashes1 = minhash.weighted_minhash([[10, 0], [11, 0], [12, 1], [13, 0], [14, 1], [15, 0]], 20)
         hashes2 = minhash.weighted_minhash([[10, 1], [11, 2], [12, 0], [13, 1], [14, 0], [15, 1]], 20)
-        testing.assert_equal(0.0, minhash.jaccard_weighted(hashes1, hashes2))
+        testing.assert_equal(0.0, minhash.weighted_jaccard(hashes1, hashes2))

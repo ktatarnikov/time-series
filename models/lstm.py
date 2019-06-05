@@ -63,6 +63,12 @@ class LSTMAutoencoder:
         self.model = self._create_model(lstm_params);
 
     def _create_model(self, lstm_params):
+        """Create Autonecoder model using lstm_params.
+        Args:
+            lstm_params: parameters for lstm model
+        Returns:
+            keras lstm model
+        """
         lstm_autoencoder = Sequential()
         # Encoder
         lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_back, activation='relu', input_shape=(self.lstm_params.timesteps_back, self.lstm_params.n_in_features), return_sequences=True))
@@ -78,7 +84,15 @@ class LSTMAutoencoder:
         return lstm_autoencoder
 
     def fit(self, X_train, y_train, X_valid, y_valid):
-
+        """Fit lstm model using adam optimizer.
+        Args:
+            X_train: ndarray of train input
+            y_train: ndarray of train output
+            X_valid: ndarray of validation input
+            y_valid: ndarray of validation output
+        Returns:
+            model training history
+        """
         adam = optimizers.Adam(self.hyper_params.learning_rate)
         self.model.compile(loss = 'mse', optimizer = adam)
         checkpoint = ModelCheckpoint(filepath="lstm_autoencoder.h5", save_best_only=True, verbose=0)
@@ -92,4 +106,10 @@ class LSTMAutoencoder:
         return model_history
 
     def predict(self, X_input):
+        """Prediction.
+        Args:
+            X_input: ndarray of test input
+        Returns:
+            prediction
+        """
         return self.model.predict(X_input)
