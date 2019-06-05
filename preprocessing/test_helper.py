@@ -26,3 +26,4 @@ class TimeseriesHelperTest(unittest.TestCase):
       helper = TimeseriesHelper()
       data_frame = helper.load_labeled_series("realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv")
       testing.assert_array_equal(['timestamp', 'y', 'label'], data_frame.columns)
+      self.assertEqual(2, (data_frame['label'] == 1).sum())

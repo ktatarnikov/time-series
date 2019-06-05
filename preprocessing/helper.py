@@ -42,7 +42,8 @@ class TimeseriesHelper:
 
         labels_json = self._load("labels/combined_labels.json")
         labels = json.loads(labels_json)
-        data_frame[self.label_variable] = data_frame[self.ts_variable].apply(lambda x: 1 if x in labels[series_path] else 0)
+        label_timestamps = set([pd.Timestamp(ts) for ts in labels[series_path]])
+        data_frame[self.label_variable] = data_frame[self.ts_variable].apply(lambda ts: 1 if ts in label_timestamps else 0)
         return data_frame
 
     def _load(self, file_name):
