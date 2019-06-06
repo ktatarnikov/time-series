@@ -6,6 +6,12 @@ from sklearn.metrics import confusion_matrix, precision_recall_curve
 from sklearn.metrics import recall_score, classification_report, auc, roc_curve
 from sklearn.metrics import precision_recall_fscore_support, f1_score
 
+def flatten(X):
+    flattened_X = np.empty((X.shape[0], X.shape[2]))  # sample x features array.\n",
+    for i in range(X.shape[0]):
+        flattened_X[i] = X[i, (X.shape[1]-1), :]
+    return(flattened_X)
+
 class TimeseriesHelper:
     def __init__(self, response_variable = 'y', ts_variable = 'timestamp', label_variable = 'label'):
         self.response_variable = response_variable
@@ -19,6 +25,47 @@ class TimeseriesHelper:
     def plot_metric(self, metric):
         plt.plot(metric[self.ts_variable], metric[self.response_variable])
         plt.xticks(rotation='vertical')
+
+    def plot_metrics(self, df_map, figsize=(8, 4), ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
+        '''
+        Plot metrics with anomaly labels.
+
+        Parameters
+        ----------
+        df_map : the map of name to pd.DataFrame
+        name: name on the plot
+        figsize: figsize tuple
+        ts_var: timestamp variable name, default 'timestamp'
+        label_var: the label variable name, default 'label'
+        response_var: the response variable name, default 'y'
+        '''
+        idx = 1
+        for name, df in df_map.items():
+            ax = plt.subplot(9, 1, idx)
+            ax.set_title(name)
+            self.plot_metric(data_frame = df, name = name, ax = ax, figsize = figsize)
+            idx += 1
+
+    def plot_metric(self, data_frame, name = None, ax = None, figsize = (20, 10), ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
+        '''
+        Plot metric with anomaly labels.
+
+        Parameters
+        ----------
+        data_frame : pd.DataFrame
+        name: name on the plot
+        figsize: figsize tuple
+        ts_var: timestamp variable name, default 'timestamp'
+        label_var: the label variable name, default 'label'
+        response_var: the response variable name, default 'y'
+        '''
+        ax = ax if ax is not None else plt
+        plt.figure(figsize = figsize)
+        ax.plot(data_frame[ts_var], data_frame[response_var])
+        plt.xticks(rotation='vertical')
+        discords = data_frame[data_frame[label_var]==1]
+        for discord in data_frame[data_frame[label_var] == 1][ts_var]:
+            ax.axvspan(discord, discord, alpha=0.5, color='red')
 
     def load_labeled_series(self, series_path):
         '''
@@ -45,6 +92,25 @@ class TimeseriesHelper:
         label_timestamps = set([pd.Timestamp(ts) for ts in labels[series_path]])
         data_frame[self.label_variable] = data_frame[self.ts_variable].apply(lambda ts: 1 if ts in label_timestamps else 0)
         return data_frame
+
+    def load_multiple_series(self, metric_files):
+        '''
+        Loads labeled metrics.
+
+        Parameters
+        ----------
+        metric_files : list of str
+            The metric files
+
+        Returns
+        -------
+            dict of metric name to pd.DataFrame
+        '''
+        result = dict()
+        for metric_file in metric_files:
+            df = self.load_labeled_series(metric_file)
+            result[metric_file] = df
+        return result
 
     def _load(self, file_name):
         with open (file_name, "r") as file:
