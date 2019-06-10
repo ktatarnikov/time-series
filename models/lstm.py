@@ -35,15 +35,21 @@ class LSTMAutoencoderParams:
     n_output_features : int
         the number of output features
 
+    encoder_layers : list of layer_config
+
+    decoder_layers : list of layer_config
+
     seed : int
         random seed
     '''
-    def __init__(self, timesteps_back, timesteps_forward, n_in_features, n_out_features, seed):
+    def __init__(self, timesteps_back, timesteps_forward, n_in_features, n_out_features, encoder_layers, decoder_layers, seed):
         self.seed = seed
         self.timesteps_back = timesteps_back
         self.n_in_features = n_in_features
         self.n_out_features = n_out_features
         self.timesteps_forward = timesteps_forward
+        self.encoder_layers = encoder_layers
+        self.decoder_layers = decoder_layers
 
 class LSTMAutoencoder:
     '''
@@ -72,12 +78,16 @@ class LSTMAutoencoder:
         lstm_autoencoder = Sequential()
         # Encoder
         lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_back, activation='relu', input_shape=(self.lstm_params.timesteps_back, self.lstm_params.n_in_features), return_sequences=True))
-        lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
-        lstm_autoencoder.add(LSTM(1, activation='relu'))
+        for idx, layer_config in enumerate(self.lstm_params.encoder_layers):
+            if idx != len(self.lstm_params.encoder_layers) - 1:
+                lstm_autoencoder.add(LSTM(layer_config["size"], activation='relu', return_sequences=True))
+            else:
+                lstm_autoencoder.add(LSTM(layer_config["size"], activation='relu'))
         lstm_autoencoder.add(RepeatVector(self.lstm_params.timesteps_forward))
         # Decoder
         lstm_autoencoder.add(LSTM(self.lstm_params.timesteps_forward, activation='relu', return_sequences=True))
-        lstm_autoencoder.add(LSTM(16, activation='relu', return_sequences=True))
+        for layer_config in self.lstm_params.decoder_layers:
+            lstm_autoencoder.add(LSTM(layer_config["size"], activation='relu', return_sequences=True))
         lstm_autoencoder.add(TimeDistributed(Dense(self.lstm_params.n_out_features)))
 
         lstm_autoencoder.summary()
@@ -94,7 +104,7 @@ class LSTMAutoencoder:
             model training history
         """
         adam = optimizers.Adam(self.hyper_params.learning_rate)
-        self.model.compile(loss = 'mse', optimizer = adam)
+        self.model.compile(loss = 'mse', optimizer = adam, metrics=['accuracy'])
         checkpoint = ModelCheckpoint(filepath="lstm_autoencoder.h5", save_best_only=True, verbose=0)
         tensor_board = TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True)
         model_history = self.model.fit(X_train, y_train,
