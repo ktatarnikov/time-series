@@ -13,6 +13,19 @@ def flatten(X):
     return(flattened_X)
 
 class TimeseriesHelper:
+    '''
+    Time series helper.
+    Contains a set of utilities for data loading and graph plotting.
+
+    Parameters
+    ----------
+    response_variable : string
+        response variable name, e.g. 'y'
+    ts_variable: str
+        timestamp variable name, e.g 'timestamp'
+    label_variable: int
+        label variable name, e.g. 'label'
+    '''
     def __init__(self, response_variable = 'y', ts_variable = 'timestamp', label_variable = 'label'):
         self.response_variable = response_variable
         self.ts_variable = ts_variable
@@ -22,9 +35,37 @@ class TimeseriesHelper:
         metric_window = windows[num]
         self.plot_metric(windows[num])
 
-    def plot_metric(self, metric):
-        plt.plot(metric[self.ts_variable], metric[self.response_variable])
-        plt.xticks(rotation='vertical')
+    def plot_model_loss(self, history):
+        '''
+        Plot model loss graph.
+
+        Parameters
+        ----------
+        history : history of model fitting
+        '''
+        plt.figure(figsize=(15, 5))
+        plt.plot(history['loss'], linewidth=2, label='Train')
+        plt.plot(history['val_loss'], linewidth=2, label='Valid')
+        plt.legend(loc ='upper right')
+        plt.title('Model loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.show()
+
+    def plot_model_accuracy(self, history):
+        '''
+        Plot model accuracy graph.
+
+        Parameters
+        ----------
+        history : history of model fitting
+        '''
+        plt.figure(figsize=(15, 5))
+        plt.title('Accuracy')
+        plt.plot(history['acc'], label='train')
+        plt.plot(history['val_acc'], label='test')
+        plt.legend(loc ='upper right')
+        plt.show()
 
     def plot_metrics(self, df_map, figsize=(8, 4), ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
         '''
@@ -39,16 +80,21 @@ class TimeseriesHelper:
         label_var: the label variable name, default 'label'
         response_var: the response variable name, default 'y'
         '''
-        idx = 1
+        idx = 0
+        total = len(df_map)
+        fig, axes = plt.subplots(total, 1, squeeze=False, figsize = figsize)
+        fig
         for name, df in df_map.items():
-            ax = plt.subplot(9, 1, idx)
-            ax.set_title(name)
+            ax = axes[idx][0]
             self.plot_metric(data_frame = df, name = name, ax = ax, figsize = figsize)
             idx += 1
+            if idx > 9:
+                idx = 0
 
-    def plot_metric(self, data_frame, name = None, ax = None, figsize = (20, 10), ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
+    def plot_metric(self, data_frame, name = None, ax = None, figsize = (20, 10), \
+            ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
         '''
-        Plot metric with anomaly labels.
+        Plot metric with labels.
 
         Parameters
         ----------
@@ -59,13 +105,15 @@ class TimeseriesHelper:
         label_var: the label variable name, default 'label'
         response_var: the response variable name, default 'y'
         '''
-        ax = ax if ax is not None else plt
-        plt.figure(figsize = figsize)
+        # plt.figure(figsize = figsize)
+        ax = ax if ax is not None else plt.subplot(1, 1, 1)
+        if name is not None:
+            ax.set_title(name)
         ax.plot(data_frame[ts_var], data_frame[response_var])
         plt.xticks(rotation='vertical')
-        discords = data_frame[data_frame[label_var]==1]
-        for discord in data_frame[data_frame[label_var] == 1][ts_var]:
-            ax.axvspan(discord, discord, alpha=0.5, color='red')
+        labels = data_frame[data_frame[label_var]==1]
+        for label in data_frame[data_frame[label_var] == 1][ts_var]:
+            ax.axvspan(label, label, alpha=0.5, color='red')
 
     def load_labeled_series(self, series_path):
         '''
@@ -136,15 +184,6 @@ class TimeseriesHelper:
                 max_window = window
                 max_idx = idx
         return max_idx, max_window
-
-    def plot_model_history(self, model_history):
-        plt.plot(model_history['loss'], linewidth=2, label='Train')
-        plt.plot(model_history['val_loss'], linewidth=2, label='Valid')
-        plt.legend(loc='upper right')
-        plt.title('Model loss')
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.show()
 
     def plot_curve(self, X_test, Y_test, X_prediction):
         mse = np.mean(np.power(flatten(X_test) - flatten(X_prediction), 2), axis=1)

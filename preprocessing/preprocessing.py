@@ -98,18 +98,18 @@ class TimeSeriesPreprocessor:
         '''
         series = series.sort_values(by = self.ts_variable)
         start_date = pd.Timestamp(series[self.ts_variable][0]) - pd.Timedelta(seconds = self.window_shift)
-        end_date = pd.Timestamp(series[self.ts_variable][0]) + pd.Timedelta(seconds = self.window_shift)
+        end_date = start_date + pd.Timedelta(seconds = self.window_size_seconds)
         series_begin = pd.Timestamp(series[self.ts_variable][0])
         series_end = pd.Timestamp(series[self.ts_variable][len(series[self.ts_variable]) - 1]) - pd.Timedelta(seconds = self.horizon_shift_seconds)
 
         nanos_in_second = 1000 * 1000 * 1000
         total_seconds = int((series_end - series_begin).delta / nanos_in_second)
-        number_of_windows = int((total_seconds) / self.window_shift)
+        number_of_windows = int((total_seconds) / self.window_size_seconds)
         result = []
 
         for window_num in range(0, number_of_windows):
             start_date = start_date + pd.Timedelta(seconds = self.window_shift)
-            end_date = end_date + pd.Timedelta(seconds = self.window_shift)
+            end_date = start_date + pd.Timedelta(seconds = self.window_size_seconds)
             horizon_shift_date = end_date + pd.Timedelta(seconds = self.horizon_shift_seconds)
 
             input_mask = (series[self.ts_variable] >= start_date) & (series[self.ts_variable] < end_date)
