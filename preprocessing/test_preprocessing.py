@@ -12,7 +12,8 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
   def test_make_dataset(self):
       preprocessor = TimeSeriesPreprocessor(
             window_size_seconds = 300,
-            window_shift=150,
+            window_shift = 180,
+            horizon_shift_seconds = 300,
             probe_period_seconds = 60)
       labels_list = [0, 1, 30, 45, 59]
       input = make_series([i for i in range(0, 60)])
@@ -30,7 +31,7 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
         output_vars = output_variables,
         numeric_vars = ["y"])
 
-      self.assertEqual(len(dataset), 21)
+      self.assertEqual(len(dataset), 16)
       total_count = 0
       last = 0
       for idx, window in enumerate(dataset):
@@ -48,8 +49,39 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
 
           total_count += (output.loc[index]['label'] == 1).sum()
           last = index[len(output) - 1]
-      self.assertEqual(last, 59)
-      self.assertEqual(total_count, 5)
+      self.assertEqual(last, 54)
+      self.assertEqual(total_count, 4)
+
+  def test_make_prediction(self):
+      preprocessor = TimeSeriesPreprocessor(
+            window_size_seconds = 300,
+            window_shift = 180,
+            horizon_shift_seconds = 300,
+            probe_period_seconds = 60)
+      labels_list = [0, 1, 30, 45, 59]
+      input = make_series([i for i in range(0, 60)])
+
+      label_index = input.iloc[labels_list, 0].index
+      labels = make_labels(input, indices = label_index)
+      input['label'] = labels['label']
+
+      input_variables = ['y']
+      output_variables = ['y', 'label']
+
+      class mockmodel:
+          def predict(self, x):
+              xs = x.squeeze()
+              v = np.array([np.array([xs.transpose(), xs.transpose()]).transpose()])
+              return v
+      model = mockmodel()
+      result = preprocessor.make_prediction(
+        model = model,
+        series = input,
+        input_vars = input_variables,
+        output_vars = output_variables)
+
+      self.assertEqual(result['pred_y'].sum(), 990.0)
+      self.assertEqual(result['pred_label'].sum(), 990.0)
 
   def test_impute_series(self):
       preprocessor = TimeSeriesPreprocessor(
@@ -81,7 +113,7 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
         numeric_vars = ["y"],
         auto_impute = ["y"])
 
-      self.assertEqual(len(windows), 22)
+      self.assertEqual(len(windows), 20)
       for w in windows:
           self.assertEqual(0, w[0].isnull().sum()[0])
           self.assertEqual(0, w[1].isnull().sum()[0])
@@ -121,11 +153,11 @@ class TimeSeriesPreprocessorTest(unittest.TestCase):
         numeric_vars = ["y"],
         auto_impute = ["y", "label"])
 
-      self.assertEqual(16, len(windows))
+      self.assertEqual(26, len(windows))
       for input_and_output in windows:
           input = input_and_output[0]
           output = input_and_output[1]
           self.assertEqual(0, input.isnull().sum()[0])
           self.assertEqual(0, output.isnull().sum()[0])
-          self.assertEqual(8, input.count().sum())
+          self.assertEqual(10, input.count().sum())
           self.assertEqual(4, output.count().sum())
