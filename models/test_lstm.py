@@ -38,7 +38,7 @@ class LSTMAutoencoderTest(unittest.TestCase):
       timesteps_back = input.shape[1]
       timesteps_forward = output.shape[1]
       seed = 42
-      epoch_count = 10
+      epoch_count = 1
       learning_rate = 0.0005
       batch_size = 128
       train_test_split_ratio = 0.2
@@ -47,7 +47,10 @@ class LSTMAutoencoderTest(unittest.TestCase):
       X_train, X_test, y_train, y_test = train_test_split(input, output, test_size=train_test_split_ratio, random_state = seed)
       X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=train_valid_split_ratio, random_state = seed)
 
-      lstm_params = LSTMAutoencoderParams(timesteps_back = timesteps_back, timesteps_forward = timesteps_forward,
+      lstm_params = LSTMAutoencoderParams(
+        timesteps_back = timesteps_back, timesteps_forward = timesteps_forward,
+        encoder_layers = [{"size": 16}, {"size": 8}],
+        decoder_layers = [{"size": 8}, {"size": 16}],
         n_in_features = n_in_features, n_out_features = n_out_features, seed = seed)
       hyper_params = HyperParams(epoch_count = epoch_count, learning_rate = learning_rate, batch_size = batch_size)
       lstm = LSTMAutoencoder(lstm_params = lstm_params, hyper_params = hyper_params)
@@ -55,5 +58,11 @@ class LSTMAutoencoderTest(unittest.TestCase):
 
       Y_pred = lstm.predict(X_test)
 
+      df_prepared = preprocessor.prepare_series(data_frame,
+        input_vars = input_variables, output_vars = output_variables,
+        numeric_vars = ["y"], auto_impute= ["y", "label"])
 
-      print(Y_pred)
+      df_predicted = preprocessor.make_prediction(lstm, df_prepared, input_variables, output_variables)
+
+      self.assertTrue(df_predicted['pred_label'].sum() != 0)
+      self.assertTrue(df_predicted['pred_y'].sum() != 0)

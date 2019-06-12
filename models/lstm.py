@@ -3,6 +3,7 @@ import pandas as pd
 import tensorflow as tf
 from keras import optimizers, Sequential
 from keras.models import Model
+from keras.models import load_model
 from keras.utils import plot_model
 from keras.layers import Dense, LSTM, RepeatVector, TimeDistributed
 from keras.callbacks import ModelCheckpoint, TensorBoard
@@ -92,6 +93,12 @@ class LSTMAutoencoder:
 
         lstm_autoencoder.summary()
         return lstm_autoencoder
+
+    def save(self, file_name):
+        self.model.save(file_name)
+
+    def load(self, file_name):
+        self.model = load_model(file_name)
 
     def fit(self, X_train, y_train, X_valid, y_valid):
         """Fit lstm model using adam optimizer.

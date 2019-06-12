@@ -67,6 +67,29 @@ class TimeseriesHelper:
         plt.legend(loc ='upper right')
         plt.show()
 
+    def plot_original_vs_predicted(self, df, original_vars, predicted_vars):
+        '''
+        Plot original vs predicted.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            pandas data frame
+        original_var : string
+            original variable name
+        predicted_var : string
+            predicted variable name
+
+        '''
+        plt.figure(figsize=(15, 5))
+        plt.title('Original vs Predicted')
+        for original_var in original_vars:
+            plt.plot(df[original_var], label=original_var)
+        for predicted_var in predicted_vars:
+            plt.plot(df[predicted_var], label=predicted_var)
+        plt.legend(loc ='upper right')
+        plt.show()
+
     def plot_metrics(self, df_map, figsize=(8, 4), ts_var = 'timestamp', label_var = 'label', response_var = 'y'):
         '''
         Plot metrics with anomaly labels.
@@ -105,7 +128,6 @@ class TimeseriesHelper:
         label_var: the label variable name, default 'label'
         response_var: the response variable name, default 'y'
         '''
-        # plt.figure(figsize = figsize)
         ax = ax if ax is not None else plt.subplot(1, 1, 1)
         if name is not None:
             ax.set_title(name)
