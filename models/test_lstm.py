@@ -62,7 +62,7 @@ class LSTMAutoencoderTest(unittest.TestCase):
         input_vars = input_variables, output_vars = output_variables,
         numeric_vars = ["y"], auto_impute= ["y", "label"])
 
-      df_predicted = preprocessor.make_prediction(lstm, df_prepared, input_variables, output_variables)
+      df_predicted = preprocessor.eval_prediction(lstm, df_prepared, input_variables, output_variables)
 
-      self.assertTrue(df_predicted['pred_label'].sum() != 0)
-      self.assertTrue(df_predicted['pred_y'].sum() != 0)
+      self.assertTrue(df_predicted['output_label'].sum() != 0)
+      self.assertTrue(df_predicted['output_y'].sum() != 0)

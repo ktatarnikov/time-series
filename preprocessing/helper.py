@@ -44,15 +44,15 @@ class TimeseriesHelper:
         history : history of model fitting
         '''
         plt.figure(figsize=(15, 5))
-        plt.plot(history['loss'], linewidth=2, label='Train')
-        plt.plot(history['val_loss'], linewidth=2, label='Valid')
+        plt.plot(history['loss'], linewidth=2, label='Train Loss')
+        plt.plot(history['val_loss'], linewidth=2, label='Valid. Loss')
         plt.legend(loc ='upper right')
         plt.title('Model loss')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.show()
 
-    def plot_model_accuracy(self, history):
+    def plot_model_train_accuracy(self, history):
         '''
         Plot model accuracy graph.
 
@@ -62,8 +62,8 @@ class TimeseriesHelper:
         '''
         plt.figure(figsize=(15, 5))
         plt.title('Accuracy')
-        plt.plot(history['acc'], label='train')
-        plt.plot(history['val_acc'], label='test')
+        plt.plot(history['acc'], label='Train Accuracy')
+        plt.plot(history['val_acc'], label='Valid. Accuracy')
         plt.legend(loc ='upper right')
         plt.show()
 

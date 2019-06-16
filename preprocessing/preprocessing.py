@@ -41,43 +41,71 @@ class TimeSeriesPreprocessor:
         self.probe_period_seconds = probe_period_seconds
         self.horizon_shift_seconds = horizon_shift_seconds
 
-    def make_prediction(self, model, series, input_vars, output_vars):
+    def eval_prediction(self, model, series, input_vars, output_vars, prediction_horizon_multiplier = 1):
         input_duration = pd.Timedelta(seconds = self.window_size_seconds)
         output_duration = pd.Timedelta(seconds = self.horizon_shift_seconds)
+        prediction_horizon_duration = pd.Timedelta(seconds = prediction_horizon_multiplier * self.horizon_shift_seconds)
         shift_duration = pd.Timedelta(seconds = self.window_shift)
 
         series.sort_values(by = [self.ts_variable], inplace=True)
         series_begin = pd.Timestamp(series.iloc[0][self.ts_variable])
-        series_end = pd.Timestamp(series.iloc[-1][self.ts_variable]) - output_duration - input_duration
+        series_end = pd.Timestamp(series.iloc[-1][self.ts_variable]) - prediction_horizon_duration - input_duration
 
-        input_start = pd.Timestamp(series.iloc[0][self.ts_variable]) - output_duration
-        input_end = input_start + input_duration
+        start = pd.Timestamp(series.iloc[0][self.ts_variable]) - prediction_horizon_duration + input_duration
 
         nanos_in_second = 1000 * 1000 * 1000
         total_seconds = int((series_end - series_begin).delta / nanos_in_second)
-        number_of_windows = int(total_seconds / self.horizon_shift_seconds)
+        number_of_windows = int(total_seconds / prediction_horizon_duration.seconds)
 
         # Reserving variables
         result = series.copy()
-        prediction_vars = [ f'pred_{v}' for v in output_vars ]
-        for var in prediction_vars:
-            result[var] = np.nan
+        prediction_vars = [ (v, f'output_{v}') for v in output_vars ]
+        for _, (_, output_var) in enumerate(prediction_vars):
+            result[output_var] = np.nan
 
-        for window_num in range(0, number_of_windows):
-            input_start = input_start + output_duration
-            input_end = input_start + input_duration
-            output_date = input_end + output_duration
+        for _ in range(0, number_of_windows):
+            start = start + prediction_horizon_duration
+            end = start + input_duration
 
-            input_mask = (result[self.ts_variable] >= input_start) & (result[self.ts_variable] < input_end)
+            input_mask = (result[self.ts_variable] >= start) & (result[self.ts_variable] < end)
             input_cut = result.loc[input_mask].copy()
-            input = input_cut[input_vars]
+            input = input_cut[input_vars].to_numpy()
 
-            prediction = model.predict(np.array([input.to_numpy()]))
-            output_mask = (result[self.ts_variable] >= input_end) & (result[self.ts_variable] < output_date)
+            input_start = start - output_duration
+            # iterate over predictions recursively feeding the output to the input
+            for _ in range(0, prediction_horizon_multiplier):
+                input_start = input_start + output_duration
+                input_end = input_start + input_duration
+                output_date = input_end + output_duration
 
-            t = prediction[0].transpose()
-            for idx, var in enumerate(prediction_vars):
-                result.loc[output_mask, var] = t[idx]
+                prediction = model.predict(np.array([input]))
+                output_mask = (result[self.ts_variable] >= input_end) & (result[self.ts_variable] < output_date)
+
+                prediction_as_input = prediction[0]
+                output = prediction_as_input.transpose()
+                input_last = input.shape[0]
+
+                input = np.append(input, np.zeros(shape = (prediction_as_input.shape[0], input.shape[1])), axis=0)
+
+                # Set output
+                for (output_idx, (_, var)) in enumerate(prediction_vars):
+                    if (len(result.loc[output_mask, var]) != len(output[output_idx])):
+                        print(result.loc[output_mask, var])
+                        # break
+                        print("len(result.loc[output_mask, var]): ", len(result.loc[output_mask, var]))
+                        print("len(output[output_idx]): ", len(output[output_idx]))
+                        # print("prediction_as_input: ", prediction_as_input)
+                        # print("output: ", output)
+                        # print("input: ", input)
+                    result.loc[output_mask, var] = output[output_idx]
+                # reset input
+                for output_idx, (orig_var, _) in enumerate(prediction_vars):
+                    if orig_var in input_vars:
+                        input_idx = input_vars.index(orig_var)
+                        input[input_last:, input_idx] = prediction_as_input[:, output_idx]
+                input = input[-input_last:, :]
+
+
         series.sort_values(by = [self.ts_variable], inplace=True)
         series.reset_index(drop=True, inplace=True)
         return result
@@ -86,7 +114,7 @@ class TimeSeriesPreprocessor:
         '''
         Executes a number of preprocessing steps on input series.
             1. Time Alignment
-                Ensures that at least one data point exists for self.probe_period_seconds
+                Ensures that at least one data point exists for every self.probe_period_seconds
             2. Imputation
                 Impute missing for the variables specified in input_vars, output_vars
             3. Scaling
@@ -198,7 +226,7 @@ class TimeSeriesPreprocessor:
         '''
         all_vars = list(set(input_variables).union(output_variables))
 
-        series.sort_values(self.ts_variable, inplace=True)
+        series = series.sort_values(self.ts_variable)
         start_date = pd.Timestamp(series.iloc[0][self.ts_variable])
         end_date = pd.Timestamp(series.iloc[series.shape[0] - 1][self.ts_variable])
         half_window_delta = pd.Timedelta(seconds = self.probe_period_seconds/2)

@@ -3,13 +3,18 @@ import numpy as np
 class DynamicTimeWarping:
     '''
     Calculates dynamic time warping distance.
+    https://en.wikipedia.org/wiki/Dynamic_time_warping
+
+    TODO tests
+
     '''
     def dist(self, x , y):
-        """Calculates weighted minhash.
+        """Calculates distance.
         Args:
-            input: the vector of weights
+            x, y:
+                point args
         Returns:
-            np array of weighted min hash pairs
+            squared distance
         """
         return ( x - y ) * ( x - y )
 
