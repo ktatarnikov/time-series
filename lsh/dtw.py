@@ -57,7 +57,7 @@ class DynamicTimeWarping:
                     cost[k] = np.min(np.min(x, y), z) + self.dist(series1[i], series2[j])
                     if cost[k] < min_cost:
                         min_cost = cost[k]
-                k++
+                k += 1
 
             cost_tmp = cost
             cost = cost_prev
