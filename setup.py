@@ -9,26 +9,16 @@ def get_version():
   with open(get_script_path() + '/VERSION', 'r') as f:
     return f.read()
 
+def get_requirements():
+    with open('requirements.txt') as f:
+        requirements = f.read().splitlines()
+        return requirements
 setup(
   name="time-series",
   version=get_version(),
   packages=find_packages(),
 
-  install_requires=[
-      'mock==2.0.0',
-      'responses==0.9.0',
-      'tabulate==0.8.2',
-      'Requests==2.20.0',
-      'PyYAML==4.2b1',
-      'yamale==1.7.1',
-      'pytest',
-      'keras==2.2.4',
-      'pandas==0.24.1',
-      'scikit-learn==0.20.2',
-      'matplotlib==3.0.2',
-      'tensorflow==1.12.0',
-      'nb_conda==2.2.1'
-  ],
+  install_requires=get_requirements(),
   package_data={
       '': ['*.yaml'],
   },
