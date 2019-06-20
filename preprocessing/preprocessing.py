@@ -51,7 +51,7 @@ class TimeSeriesPreprocessor:
         series_begin = pd.Timestamp(series.iloc[0][self.ts_variable])
         series_end = pd.Timestamp(series.iloc[-1][self.ts_variable]) - prediction_horizon_duration - input_duration
 
-        start = pd.Timestamp(series.iloc[0][self.ts_variable]) - prediction_horizon_duration + input_duration
+        start = pd.Timestamp(series.iloc[0][self.ts_variable]) - prediction_horizon_duration + output_duration
 
         nanos_in_second = 1000 * 1000 * 1000
         total_seconds = int((series_end - series_begin).delta / nanos_in_second)
@@ -89,14 +89,6 @@ class TimeSeriesPreprocessor:
 
                 # Set output
                 for (output_idx, (_, var)) in enumerate(prediction_vars):
-                    if (len(result.loc[output_mask, var]) != len(output[output_idx])):
-                        print(result.loc[output_mask, var])
-                        # break
-                        print("len(result.loc[output_mask, var]): ", len(result.loc[output_mask, var]))
-                        print("len(output[output_idx]): ", len(output[output_idx]))
-                        # print("prediction_as_input: ", prediction_as_input)
-                        # print("output: ", output)
-                        # print("input: ", input)
                     result.loc[output_mask, var] = output[output_idx]
                 # reset input
                 for output_idx, (orig_var, _) in enumerate(prediction_vars):
