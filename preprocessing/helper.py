@@ -5,6 +5,7 @@ import json
 from sklearn.metrics import confusion_matrix, precision_recall_curve
 from sklearn.metrics import recall_score, classification_report, auc, roc_curve
 from sklearn.metrics import precision_recall_fscore_support, f1_score
+from sklearn.metrics import average_precision_score
 
 def flatten(X):
     flattened_X = np.empty((X.shape[0], X.shape[2]))  # sample x features array.\n",
@@ -193,6 +194,20 @@ class TimeseriesHelper:
               metric['timestamp'].map(lambda x : x.day).rename('day'),
               metric['timestamp'].map(lambda x : x.hour).rename('hour')]).count()
         return grouped_by_hour
+
+    def evaluate(self, Y_actual, Y_predicted):
+        results = {}
+        results["confusion_matrix"] = confusion_matrix(Y_actual, Y_predicted)
+        results["average_precision_score"] = average_precision_score(Y_actual, Y_predicted, average="macro")
+        results["f1_score"] = f1_score(Y_actual, Y_predicted, pos_label=1.0)
+        return results
+
+    def print_results(self, context, results):
+        print(f"{context} metrics:")
+        print("confusion matrix: ")
+        print(results["confusion_matrix"])
+        print("average_precision_score: ", results["average_precision_score"])
+        print("f1_score: ", results["f1_score"])
 
     def find_window_discords(self, windows):
         max_response = 0
