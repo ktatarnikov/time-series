@@ -7,6 +7,7 @@ from datetime import date, timedelta as td
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
+
 class TimeSeriesPreprocessor:
     '''
     Time series preprocessor.
@@ -28,12 +29,12 @@ class TimeSeriesPreprocessor:
         timestamp variable name in the dataframe
     '''
     def __init__(self,
-            window_size_seconds = 7200,
-            window_shift = 3600,
-            horizon_shift_seconds = 300,
-            scaler = StandardScaler(),
-            probe_period_seconds = 300,
-            ts_variable = 'timestamp'):
+                 window_size_seconds=7200,
+                 window_shift=3600,
+                 horizon_shift_seconds=300,
+                 scaler=StandardScaler(),
+                 probe_period_seconds=300,
+                 ts_variable='timestamp'):
         self.window_size_seconds = window_size_seconds
         self.ts_variable = ts_variable
         self.window_shift = window_shift
@@ -41,25 +42,35 @@ class TimeSeriesPreprocessor:
         self.probe_period_seconds = probe_period_seconds
         self.horizon_shift_seconds = horizon_shift_seconds
 
-    def eval_prediction(self, model, series, input_vars, output_vars, prediction_horizon_multiplier = 1):
-        input_duration = pd.Timedelta(seconds = self.window_size_seconds)
-        output_duration = pd.Timedelta(seconds = self.horizon_shift_seconds)
-        prediction_horizon_duration = pd.Timedelta(seconds = prediction_horizon_multiplier * self.horizon_shift_seconds)
-        shift_duration = pd.Timedelta(seconds = self.window_shift)
+    def eval_prediction(self,
+                        model,
+                        series,
+                        input_vars,
+                        output_vars,
+                        prediction_horizon_multiplier=1):
+        input_duration = pd.Timedelta(seconds=self.window_size_seconds)
+        output_duration = pd.Timedelta(seconds=self.horizon_shift_seconds)
+        prediction_horizon_duration = pd.Timedelta(
+            seconds=prediction_horizon_multiplier * self.horizon_shift_seconds)
+        shift_duration = pd.Timedelta(seconds=self.window_shift)
 
-        series.sort_values(by = [self.ts_variable], inplace=True)
+        series.sort_values(by=[self.ts_variable], inplace=True)
         series_begin = pd.Timestamp(series.iloc[0][self.ts_variable])
-        series_end = pd.Timestamp(series.iloc[-1][self.ts_variable]) - prediction_horizon_duration - input_duration
+        series_end = pd.Timestamp(series.iloc[-1][
+            self.ts_variable]) - prediction_horizon_duration - input_duration
 
-        start = pd.Timestamp(series.iloc[0][self.ts_variable]) - prediction_horizon_duration + output_duration
+        start = pd.Timestamp(series.iloc[0][
+            self.ts_variable]) - prediction_horizon_duration + output_duration
 
         nanos_in_second = 1000 * 1000 * 1000
-        total_seconds = int((series_end - series_begin).delta / nanos_in_second)
-        number_of_windows = int(total_seconds / prediction_horizon_duration.seconds)
+        total_seconds = int(
+            (series_end - series_begin).delta / nanos_in_second)
+        number_of_windows = int(total_seconds /
+                                prediction_horizon_duration.seconds)
 
         # Reserving variables
         result = series.copy()
-        prediction_vars = [ (v, f'output_{v}') for v in output_vars ]
+        prediction_vars = [(v, f'output_{v}') for v in output_vars]
         for _, (_, output_var) in enumerate(prediction_vars):
             result[output_var] = np.nan
 
@@ -67,7 +78,8 @@ class TimeSeriesPreprocessor:
             start = start + prediction_horizon_duration
             end = start + input_duration
 
-            input_mask = (result[self.ts_variable] >= start) & (result[self.ts_variable] < end)
+            input_mask = (result[self.ts_variable] >=
+                          start) & (result[self.ts_variable] < end)
             input_cut = result.loc[input_mask].copy()
             input = input_cut[input_vars].to_numpy()
 
@@ -79,13 +91,17 @@ class TimeSeriesPreprocessor:
                 output_date = input_end + output_duration
 
                 prediction = model.predict(np.array([input]))
-                output_mask = (result[self.ts_variable] >= input_end) & (result[self.ts_variable] < output_date)
+                output_mask = (result[self.ts_variable] >= input_end) & (
+                    result[self.ts_variable] < output_date)
 
                 prediction_as_input = prediction[0]
                 output = prediction_as_input.transpose()
                 input_last = input.shape[0]
 
-                input = np.append(input, np.zeros(shape = (prediction_as_input.shape[0], input.shape[1])), axis=0)
+                input = np.append(input,
+                                  np.zeros(shape=(prediction_as_input.shape[0],
+                                                  input.shape[1])),
+                                  axis=0)
 
                 # Set output
                 for (output_idx, (_, var)) in enumerate(prediction_vars):
@@ -94,15 +110,20 @@ class TimeSeriesPreprocessor:
                 for output_idx, (orig_var, _) in enumerate(prediction_vars):
                     if orig_var in input_vars:
                         input_idx = input_vars.index(orig_var)
-                        input[input_last:, input_idx] = prediction_as_input[:, output_idx]
+                        input[input_last:,
+                              input_idx] = prediction_as_input[:, output_idx]
                 input = input[-input_last:, :]
 
-
-        series.sort_values(by = [self.ts_variable], inplace=True)
+        series.sort_values(by=[self.ts_variable], inplace=True)
         series.reset_index(drop=True, inplace=True)
         return result
 
-    def make_dataset_from_series_and_labels(self, series, input_vars, output_vars, numeric_vars, auto_impute = []):
+    def make_dataset_from_series_and_labels(self,
+                                            series,
+                                            input_vars,
+                                            output_vars,
+                                            numeric_vars,
+                                            auto_impute=[]):
         '''
         Executes a number of preprocessing steps on input series.
             1. Time Alignment
@@ -134,10 +155,13 @@ class TimeSeriesPreprocessor:
                 - columns that correspond to input_vars (output_vars)
                 - rows that correspond to timestamped value
         '''
-        series_prepared = self.prepare_series(series, input_vars, output_vars, numeric_vars, auto_impute)
-        return self.split_into_samples(series_prepared, input_vars, output_vars)
+        series_prepared = self.prepare_series(series, input_vars, output_vars,
+                                              numeric_vars, auto_impute)
+        return self.split_into_samples(series_prepared, input_vars,
+                                       output_vars)
 
-    def prepare_series(self, series, input_vars, output_vars, numeric_vars, auto_impute):
+    def prepare_series(self, series, input_vars, output_vars, numeric_vars,
+                       auto_impute):
         series = self.time_alignment(series, input_vars, output_vars)
         series = self.impute_missing(series, auto_impute)
         series = self.scale(series, numeric_vars)
@@ -161,20 +185,23 @@ class TimeSeriesPreprocessor:
             Input and output are pandas frames that contain input and prediction windows
             with data points for each column.
         '''
-        input_duration = pd.Timedelta(seconds = self.window_size_seconds)
-        output_duration = pd.Timedelta(seconds = self.horizon_shift_seconds)
-        shift_duration = pd.Timedelta(seconds = self.window_shift)
+        input_duration = pd.Timedelta(seconds=self.window_size_seconds)
+        output_duration = pd.Timedelta(seconds=self.horizon_shift_seconds)
+        shift_duration = pd.Timedelta(seconds=self.window_shift)
 
-        series = series.sort_values(by = self.ts_variable)
+        series = series.sort_values(by=self.ts_variable)
         series_begin = pd.Timestamp(series.iloc[0][self.ts_variable])
-        series_end = pd.Timestamp(series.iloc[-1][self.ts_variable]) - input_duration - output_duration
+        series_end = pd.Timestamp(series.iloc[-1][
+            self.ts_variable]) - input_duration - output_duration
 
-        input_start = pd.Timestamp(series.iloc[0][self.ts_variable]) - shift_duration
+        input_start = pd.Timestamp(
+            series.iloc[0][self.ts_variable]) - shift_duration
         input_end = input_start + input_duration
 
         nanos_in_second = 1000 * 1000 * 1000
-        total_seconds = int((series_end - series_begin).delta / nanos_in_second)
-        number_of_windows = int(total_seconds/ self.window_shift)
+        total_seconds = int(
+            (series_end - series_begin).delta / nanos_in_second)
+        number_of_windows = int(total_seconds / self.window_shift)
         result = []
 
         for window_num in range(0, number_of_windows):
@@ -182,11 +209,13 @@ class TimeSeriesPreprocessor:
             input_end = input_start + input_duration
             output_date = input_end + output_duration
 
-            input_mask = (series[self.ts_variable] >= input_start) & (series[self.ts_variable] < input_end)
+            input_mask = (series[self.ts_variable] >=
+                          input_start) & (series[self.ts_variable] < input_end)
             input_cut = series.loc[input_mask].copy()
             input = input_cut[input_variables]
 
-            output_mask = (series[self.ts_variable] >= input_end) & (series[self.ts_variable] < output_date)
+            output_mask = (series[self.ts_variable] >= input_end) & (
+                series[self.ts_variable] < output_date)
             output_cut = series.loc[output_mask].copy()
             output = output_cut[output_variables]
             result.append([input, output])
@@ -194,7 +223,8 @@ class TimeSeriesPreprocessor:
 
     def scale(self, series, numeric_vars):
         if self.scaler is not None:
-            series[numeric_vars] = self.scaler.fit_transform(series[numeric_vars])
+            series[numeric_vars] = self.scaler.fit_transform(
+                series[numeric_vars])
             # (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 
@@ -220,9 +250,10 @@ class TimeSeriesPreprocessor:
 
         series = series.sort_values(self.ts_variable)
         start_date = pd.Timestamp(series.iloc[0][self.ts_variable])
-        end_date = pd.Timestamp(series.iloc[series.shape[0] - 1][self.ts_variable])
-        half_window_delta = pd.Timedelta(seconds = self.probe_period_seconds/2)
-        window_delta = pd.Timedelta(seconds = self.probe_period_seconds)
+        end_date = pd.Timestamp(series.iloc[series.shape[0] -
+                                            1][self.ts_variable])
+        half_window_delta = pd.Timedelta(seconds=self.probe_period_seconds / 2)
+        window_delta = pd.Timedelta(seconds=self.probe_period_seconds)
 
         current_start = start_date - half_window_delta
         current_end = current_start + window_delta
@@ -232,22 +263,27 @@ class TimeSeriesPreprocessor:
         num_windows = int(total_seconds / window_delta.seconds)
         to_append = []
         for i in range(0, num_windows):
-            mask = (series[self.ts_variable] >= current_start) & (series[self.ts_variable] < current_end)
+            mask = (series[self.ts_variable] >=
+                    current_start) & (series[self.ts_variable] < current_end)
             number_of_rows_in_window = series.loc[mask].shape[0]
             if number_of_rows_in_window == 0:
-                missing_row = {self.ts_variable: current_start + half_window_delta}
+                missing_row = {
+                    self.ts_variable: current_start + half_window_delta
+                }
                 for var in input_variables:
                     missing_row[var] = np.nan
                 for var in output_variables:
                     missing_row[var] = np.nan
                 to_append.append(missing_row)
             elif number_of_rows_in_window > 1:
-                means = series.loc[mask, all_vars].mean(axis = 0)
+                means = series.loc[mask, all_vars].mean(axis=0)
                 for var in all_vars:
                     series.loc[mask, var] = means[var]
 
                 window_index = series.loc[mask].index
-                downsampled_row = {self.ts_variable: current_start + half_window_delta}
+                downsampled_row = {
+                    self.ts_variable: current_start + half_window_delta
+                }
                 for var in input_variables:
                     downsampled_row[var] = series.loc[window_index[0], var]
                 for var in output_variables:
@@ -261,7 +297,7 @@ class TimeSeriesPreprocessor:
             current_end = current_end + window_delta
         if len(to_append) > 0:
             series = series.append(to_append, ignore_index=True)
-        series.sort_values(by = [self.ts_variable], inplace=True)
+        series.sort_values(by=[self.ts_variable], inplace=True)
         series.reset_index(drop=True, inplace=True)
         return series
 
