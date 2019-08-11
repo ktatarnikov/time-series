@@ -17,7 +17,7 @@ class SequiturAnomaly:
     anomaly_duration : int
         the number of anomalous points below density threshold that indicate anomaly
     '''
-    def __init__(self, sequitur, density_threshold = 1, anomaly_duration = 1):
+    def __init__(self, sequitur, density_threshold=1, anomaly_duration=1):
         self.sequitur = sequitur
         self.density_threshold = density_threshold
         self.anomaly_duration = anomaly_duration
@@ -48,7 +48,7 @@ class SequiturAnomaly:
             for pos in rule.get_positions():
                 start, end = pos
                 for i in range(start, end):
-                    results[start:end+1] += 1
+                    results[start:end + 1] += 1
         return results
 
     def _detect_anomalies(self, density_curve):

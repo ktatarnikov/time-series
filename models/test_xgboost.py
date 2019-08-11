@@ -1,20 +1,21 @@
-from models.lstm import LSTMAutoencoder, LSTMAutoencoderParams
-from models.common import HyperParams
-
 import unittest
+
 import numpy as np
-from numpy import testing
 import pandas as pd
-from models.xgboost import XGBoostModel
-from preprocessing.test_common import make_labels, make_series
-from preprocessing.helper import TimeseriesHelper
-from preprocessing.feature_engineering import TimeSeriesFeatureEngineering
-from preprocessing.preprocessing import TimeSeriesPreprocessor
+from numpy import testing
 from sklearn.model_selection import train_test_split
 
+from models.common import HyperParams
+from models.lstm import LSTMAutoencoder, LSTMAutoencoderParams
+from models.xgboost import XGBoostModel
+from preprocessing.feature_engineering import TimeSeriesFeatureEngineering
+from preprocessing.helper import TimeseriesHelper
+from preprocessing.preprocessing import TimeSeriesPreprocessor
+from preprocessing.test_common import make_labels, make_series
 
-class XGBoostTest(unittest.TestCase):
-    def test_fit_transform(self):
+
+class XGBoostIntegrationTest(unittest.TestCase):
+    def test_pipeline(self):
         input_variables = ['y']
         output_variable = 'label'
         train_test_split_ratio = 0.2
@@ -22,10 +23,17 @@ class XGBoostTest(unittest.TestCase):
         seed = 42
 
         helper = TimeseriesHelper()
-        data_frame = helper.load_labeled_series(
-            "realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv")
-        # data_frame = helper.load_labeled_series("realKnownCause/ec2_request_latency_system_failure.csv")
+        ec2_request_latency_system_failure_file = "realKnownCause/ec2_request_latency_system_failure.csv"
+        ec2_cpu_utilization_failure_file = "realAWSCloudwatch/ec2_cpu_utilization_5f5533.csv"
+        Twitter_volume_AMZN_file = "realTweets/Twitter_volume_AMZN.csv"
+        machine_temperature_system_failure_file = "realKnownCause/machine_temperature_system_failure.csv"
 
+        series_name = "machine_temperature_system_failure"
+        roll_shift = 20
+
+        data_frame = helper.load_labeled_series(
+            f"realKnownCause/{series_name}.csv")
+        print(f"Calculating for {roll_shift}")
         preprocessor = TimeSeriesPreprocessor(window_size_seconds=7200,
                                               window_shift=3600,
                                               horizon_shift_seconds=3600,
@@ -33,7 +41,7 @@ class XGBoostTest(unittest.TestCase):
 
         feature_engineering = TimeSeriesFeatureEngineering(
             x_columns=input_variables,
-            roll_shift=20,
+            roll_shift=roll_shift,
             ts_variable='timestamp',
             y_column=output_variable)
 
@@ -44,8 +52,7 @@ class XGBoostTest(unittest.TestCase):
                                              auto_impute=["y"])
 
         dataset = feature_engineering.make_features(series)
-        dataset.to_csv("./dataset.csv")
-        dataset = pd.read_csv("./dataset.csv")
+
         input_features = list(dataset.columns)
         input_features.remove(output_variable)
 
@@ -65,7 +72,6 @@ class XGBoostTest(unittest.TestCase):
               y_train.groupby(by=lambda v: y_train.loc[v]).count())
         X_upsampled, Y_upsampled = feature_engineering.class_imbalance_fix(
             X_train, y_train)
-        # X_upsampled, Y_upsampled = X_train.as_matrix(), y_train.as_matrix()
         elements, counts_elements = np.unique(Y_upsampled, return_counts=True)
         print("class distribution in upsampled training data.")
         print(elements)
@@ -83,4 +89,5 @@ class XGBoostTest(unittest.TestCase):
                              helper.evaluate(y_valid, Y_valid_pred))
 
         y_test_pred = model.predict(X_test.as_matrix())
-        helper.print_results("Test", helper.evaluate(y_test, y_test_pred))
+        evaluation_result = helper.evaluate(y_test, y_test_pred)
+        helper.print_results("Test", evaluation_result)

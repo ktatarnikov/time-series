@@ -1,9 +1,12 @@
 import collections
 import copy
+
 import numpy as np
+
 
 class ConsistentWeightedSamplingError(Exception):
     pass
+
 
 class ConsistentWeightedSampling(object):
     '''
@@ -22,14 +25,17 @@ class ConsistentWeightedSampling(object):
     seed: int
         random seed
     '''
-    def __init__(self, dimension, sample_size = 128, seed = 42):
+    def __init__(self, dimension, sample_size=128, seed=42):
         self.dimension = dimension
         self.sample_size = sample_size
         self.seed = seed
-        generator = np.random.RandomState(seed = seed)
-        self.rgamma = generator.gamma(2, 1, (sample_size, dimension)).astype(np.float32)
-        self.ln_cgamma = np.log(generator.gamma(2, 1, (sample_size, dimension))).astype(np.float32)
-        self.beta_uniform = generator.uniform(0, 1, (sample_size, dimension)).astype(np.float32)
+        generator = np.random.RandomState(seed=seed)
+        self.rgamma = generator.gamma(2, 1, (sample_size, dimension)).astype(
+            np.float32)
+        self.ln_cgamma = np.log(generator.gamma(
+            2, 1, (sample_size, dimension))).astype(np.float32)
+        self.beta_uniform = generator.uniform(
+            0, 1, (sample_size, dimension)).astype(np.float32)
 
     def hash(self, input):
         """Calculates weighted minhash.
@@ -39,11 +45,13 @@ class ConsistentWeightedSampling(object):
             np array of weighted min hash pairs
         """
         if not len(input) == self.dimension:
-            raise ConsistentWeightedSamplingError(f"Expecting the array of size {self.dimension}.")
-        hashvalues = np.zeros((self.sample_size, 2), dtype = np.int)
+            raise ConsistentWeightedSamplingError(
+                f"Expecting the array of size {self.dimension}.")
+        hashvalues = np.zeros((self.sample_size, 2), dtype=np.int)
         input_zeros = (input == 0)
         if input_zeros.all():
-            raise ConsistentWeightedSamplingError("Expected nonzero vector of weights.")
+            raise ConsistentWeightedSamplingError(
+                "Expected nonzero vector of weights.")
         input[input_zeros] = np.nan
         input_log = np.log(input)
         for i in range(self.sample_size):

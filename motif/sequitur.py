@@ -1,4 +1,3 @@
-
 class Rule:
     '''
     Sequitur rule:
@@ -46,6 +45,7 @@ class Rule:
         """
         return f"{self.token} -> {self.production} : {len(self.positions)}"
 
+
 class Terminal:
     '''
     Terminal symbol.
@@ -59,7 +59,7 @@ class Terminal:
     prev: previous symbol
     next: next symbol
     '''
-    def __init__(self, digram_index, sym, pos, prev = None, next = None):
+    def __init__(self, digram_index, sym, pos, prev=None, next=None):
         self.digram_index = digram_index
         self.sym = sym
         self.prev = prev
@@ -180,6 +180,7 @@ class Terminal:
         stop = self.next.pos if self.next is not None else -1
         return start, stop
 
+
 class DigramIndex:
     '''
     Dictionary holding digrams for O(1) access.
@@ -218,6 +219,7 @@ class DigramIndex:
             if len(digram_pos) == 0:
                 del self.digrams[digram_sym]
 
+
 class SymbolIndex:
     '''
     Sequitur rule:
@@ -244,6 +246,7 @@ class SymbolIndex:
         if sym not in self.symbols:
             self.symbols[sym] = []
         self.symbols[sym].append(pos)
+
 
 class Grammar:
     '''
@@ -290,6 +293,7 @@ class Grammar:
         self.current_token += 1
         return f"R{self.current_token:#04}"
 
+
 class Sequence:
     '''
     Sequitur sequence data structure.
@@ -315,7 +319,10 @@ class Sequence:
             pos:
                 total position
         """
-        self.last = Terminal(digram_index = self.digram_index, sym = sym, prev = self.last, pos = pos)
+        self.last = Terminal(digram_index=self.digram_index,
+                             sym=sym,
+                             prev=self.last,
+                             pos=pos)
         digram_sym, begin_symbol = self.last.digram_with_prev()
         self.digram_index._index_digram(digram_sym, begin_symbol)
         return digram_sym, begin_symbol
@@ -331,13 +338,16 @@ class Sequence:
 
         """
         start, _ = symbol.get_start_stop_positions()
-        rule_sym = Terminal(digram_index = self.digram_index, sym = rule.token, pos = start)
+        rule_sym = Terminal(digram_index=self.digram_index,
+                            sym=rule.token,
+                            pos=start)
         removed_digrams = symbol.replace_with_rule(rule_sym)
         if symbol == self.root:
             self.root = rule_sym
         if symbol.next == self.last:
             self.last = rule_sym
         return removed_digrams
+
 
 class Sequitur:
     '''
@@ -387,8 +397,8 @@ class Sequitur:
                 input word, a list of symbols
         """
         self.symbols.add_symbol(word[0], 0)
-        root = Terminal(digram_index = self.digrams, sym = word[0], pos = 0)
-        seq = Sequence(digram_index = self.digrams, root = root)
+        root = Terminal(digram_index=self.digrams, sym=word[0], pos=0)
+        seq = Sequence(digram_index=self.digrams, root=root)
         word_i = 1
         prev = word[0]
         while word_i < len(word):
@@ -436,6 +446,7 @@ class Sequitur:
             occurences = self.digrams.get_occurences(digram)
             if len(occurences) > 1:
                 self.keep_digram_invariant(digram, seq)
+
 
 class SequiturError(Exception):
     pass

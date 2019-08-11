@@ -1,11 +1,14 @@
 import numpy as np
 from scipy.stats import norm
 from sklearn.preprocessing import StandardScaler
-from lsh.minhash import Minhash
+
 from lsh.hashindex import HashIndex
+from lsh.minhash import Minhash
+
 
 class TimeSeriesLSHException(Exception):
     pass
+
 
 class TimeSeriesLSH:
     '''
@@ -29,14 +32,20 @@ class TimeSeriesLSH:
     random_seed: int
         the random seed
     '''
-    def __init__(self, W, sigma = 1, shingle_size = 15, hash_tables = 128, response_variable = 'y', random_seed = 42):
+    def __init__(self,
+                 W,
+                 sigma=1,
+                 shingle_size=15,
+                 hash_tables=128,
+                 response_variable='y',
+                 random_seed=42):
         np.random.seed(random_seed)
         self.W = W
         self.R = np.random.rand(W)
         self.sigma = sigma
         self.shingle_size = shingle_size
-        self.index = HashIndex(hash_tables = hash_tables)
-        self.minhash = Minhash(permutation_count = hash_tables)
+        self.index = HashIndex(hash_tables=hash_tables)
+        self.minhash = Minhash(permutation_count=hash_tables)
         self.response_variable = response_variable
 
     def fit(self, time_series):
@@ -49,7 +58,7 @@ class TimeSeriesLSH:
         for idx, ts in enumerate(time_series):
             shingles = self._series_shingles(ts)
             hash = self._hash_shingles(shingles)
-            self.index.index({ "series": ts, "idx": idx }, hash)
+            self.index.index({"series": ts, "idx": idx}, hash)
 
     def _series_shingles(self, series):
         """Makes shingles out of pandas frame
@@ -58,7 +67,8 @@ class TimeSeriesLSH:
         Returns:
             list of shingles
         """
-        znorm = StandardScaler().fit_transform(series[self.response_variable].values.reshape(-1, 1))
+        znorm = StandardScaler().fit_transform(
+            series[self.response_variable].values.reshape(-1, 1))
         bits = self._series_to_bit_string(znorm.squeeze())
         return self._bits_to_shingles(bits)
 
@@ -71,7 +81,7 @@ class TimeSeriesLSH:
         """
         result = []
         for i in range(0, len(series) - self.W + 1, self.sigma):
-            window = series[i : (i + self.W)]
+            window = series[i:(i + self.W)]
             result.append(np.sign(window.dot(self.R)))
         return result
 
@@ -85,7 +95,7 @@ class TimeSeriesLSH:
         """
         result = {}
         for i in range(0, len(bits) - self.shingle_size + 1, 1):
-            shingle = self._to_shingle_str(bits[i : (i + self.shingle_size)])
+            shingle = self._to_shingle_str(bits[i:(i + self.shingle_size)])
             if shingle not in result:
                 result[shingle] = 1
             else:
@@ -105,7 +115,8 @@ class TimeSeriesLSH:
             or set to 0 - otherwise
         """
         if len(shingle_window) > 32:
-            raise TimeSeriesLSHException("Expected shingle window of size < 32")
+            raise TimeSeriesLSHException(
+                "Expected shingle window of size < 32")
         result = 0
         for idx, c in enumerate(shingle_window):
             result = self.set_bit(result, idx, c >= 0)
@@ -120,10 +131,10 @@ class TimeSeriesLSH:
         Returns:
             integer value with bit set
         """
-        mask = 1 << index   # Compute mask, an integer with just bit 'index' set.
-        value &= ~mask          # Clear the bit indicated by the mask (if x is False)
+        mask = 1 << index  # Compute mask, an integer with just bit 'index' set.
+        value &= ~mask  # Clear the bit indicated by the mask (if x is False)
         if x:
-            value |= mask # If x was True, set the bit indicated by the mask.
+            value |= mask  # If x was True, set the bit indicated by the mask.
         return value
 
     def _hash_shingles(self, shingles):
@@ -133,7 +144,8 @@ class TimeSeriesLSH:
         Returns:
             np array of hash pairs
         """
-        return self.minhash.weighted_minhash(shingles, np.power(2, self.shingle_size))
+        return self.minhash.weighted_minhash(shingles,
+                                             np.power(2, self.shingle_size))
 
     def query(self, query):
         """Query similar time series using weighted jaccard similarity.

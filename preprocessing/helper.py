@@ -1,12 +1,14 @@
-import pandas as pd
+import json
+import os.path
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os.path
-import json
-from sklearn.metrics import confusion_matrix, precision_recall_curve, precision_score
-from sklearn.metrics import recall_score, classification_report, auc, roc_curve
-from sklearn.metrics import precision_recall_fscore_support, f1_score
-from sklearn.metrics import average_precision_score
+import pandas as pd
+from sklearn.metrics import (auc, average_precision_score,
+                             classification_report, confusion_matrix, f1_score,
+                             precision_recall_curve,
+                             precision_recall_fscore_support, precision_score,
+                             recall_score, roc_curve)
 
 
 def flatten(X):
@@ -243,7 +245,9 @@ class TimeseriesHelper:
         results["average_precision_score"] = average_precision_score(
             Y_actual, Y_predicted, average="macro")
         results["f1_score"] = f1_score(Y_actual, Y_predicted, pos_label=1.0)
-        results["precision"] = precision_score(Y_actual, Y_predicted, pos_label=1.0)
+        results["precision"] = precision_score(Y_actual,
+                                               Y_predicted,
+                                               pos_label=1.0)
         results["recall"] = recall_score(Y_actual, Y_predicted, pos_label=1.0)
         return results
 

@@ -10,21 +10,25 @@ The tiny collection of algorithms to work with time series.
   [NIPS Time Series Workshop 2016] SSH (Sketch, Shingle, & Hash) for Indexing Massive-Scale Time Series.
     by Chen Luo, Anshumali Shrivastava (https://arxiv.org/abs/1610.07328)
 
-- Wighted minhash 
+- Wighted minhash
   "Improved consistent sampling, weighted minhash and l1 sketching.", by Ioffe, Sergey.
     Data Mining (ICDM), 2010 IEEE 10th International Conference on. IEEE, 2010.  
 
 - LSTM Autoencoder
   https://blog.keras.io/building-autoencoders-in-keras.html
 
-- Preprocessing and Cleaning tools
+- Gradient Boosting tree
+  https://blog.keras.io/building-autoencoders-in-keras.html
+
+- Preprocessing and Feature Engineering tools
 
 # Installation
 
 - git clone ...
-- pip install .
+- pip install -r requirements.txt
 
 # Usage
+
 
 # Known Bugs
 

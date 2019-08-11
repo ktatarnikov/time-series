@@ -1,12 +1,16 @@
-import numpy as np
-import sys
 import hashlib
 import math
 import struct
+import sys
+
+import numpy as np
+
 from lsh.cws import ConsistentWeightedSampling
+
 
 class MinhashError(Exception):
     pass
+
 
 class Minhash:
     '''
@@ -19,7 +23,7 @@ class Minhash:
     seed: int
         random seed
     '''
-    def __init__(self, permutation_count = 128, seed = 42):
+    def __init__(self, permutation_count=128, seed=42):
         self.seed = seed
         self.hash_prime = (1 << 61) - 1
         self.max_hash = (1 << 32) - 1
@@ -28,9 +32,10 @@ class Minhash:
         self.permutation_count = permutation_count
         generator = np.random.RandomState(self.seed)
         self.permutations = np.array(
-            [(generator.randint(1, self.hash_prime, dtype = np.uint64),
-              generator.randint(0, self.hash_prime, dtype = np.uint64)) for _ in range(self.permutation_count)],
-              dtype=np.uint64).T
+            [(generator.randint(1, self.hash_prime, dtype=np.uint64),
+              generator.randint(0, self.hash_prime, dtype=np.uint64))
+             for _ in range(self.permutation_count)],
+            dtype=np.uint64).T
 
     def jaccard(self, values1, values2):
         """Calculates jaccard similarity between 2 arrays of hashes.
@@ -41,8 +46,11 @@ class Minhash:
             the approximated jaccard similarity
         """
         if len(values1) != len(values2):
-            raise MinhashError(f"the length of hashvalues are different: {len(length1)} vs {len(length2)}.")
-        return np.float(np.count_nonzero(values1 == values2)) / np.float(len(values1))
+            raise MinhashError(
+                f"the length of hashvalues are different: {len(length1)} vs {len(length2)}."
+            )
+        return np.float(np.count_nonzero(values1 == values2)) / np.float(
+            len(values1))
 
     def minhash(self, values):
         """Calculates minhash of values.
@@ -51,7 +59,8 @@ class Minhash:
         Returns:
             np array of hashed values
         """
-        result = np.ones(self.permutation_count, dtype = np.uint64) * self.max_hash
+        result = np.ones(self.permutation_count,
+                         dtype=np.uint64) * self.max_hash
         for value in values:
             result = np.minimum(result, self._minhash_value(value))
         return result
@@ -65,7 +74,8 @@ class Minhash:
         """
         hash = self._sha_hash(self._encode_string(value))
         a, b = self.permutations
-        return np.bitwise_and((a * hash + b) % self.hash_prime, np.uint64(self.max_hash))
+        return np.bitwise_and((a * hash + b) % self.hash_prime,
+                              np.uint64(self.max_hash))
 
     def weighted_jaccard(self, values1, values2):
         """ Approximated jaccard similarity.
@@ -90,10 +100,11 @@ class Minhash:
         Returns:
             weighted minhash
         """
-        sampler = ConsistentWeightedSampling(dimension = dimension, seed = self.seed)
+        sampler = ConsistentWeightedSampling(dimension=dimension,
+                                             seed=self.seed)
         weights = np.array(weighted_values)
-        dense_array = np.zeros(dimension, dtype = np.float64)
-        dense_array[weights[:,0]] = weights[:,1]
+        dense_array = np.zeros(dimension, dtype=np.float64)
+        dense_array[weights[:, 0]] = weights[:, 1]
         return sampler.hash(dense_array)
 
     def _encode_string(self, value):

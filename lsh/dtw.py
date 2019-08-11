@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class DynamicTimeWarping:
     '''
     Calculates dynamic time warping distance.
@@ -8,7 +9,7 @@ class DynamicTimeWarping:
     TODO tests
 
     '''
-    def dist(self, x , y):
+    def dist(self, x, y):
         """Calculates distance.
         Args:
             x, y:
@@ -16,7 +17,7 @@ class DynamicTimeWarping:
         Returns:
             squared distance
         """
-        return ( x - y ) * ( x - y )
+        return (x - y) * (x - y)
 
     def distance(self, series1, series2, r_size):
         """DTW distance.
@@ -27,8 +28,8 @@ class DynamicTimeWarping:
         Returns:
             dtw distance
         """
-        cost = np.full(2 * r_size + 1, np.Infinity, dtype = np.float32)
-        cost_prev = np.full(2 * r_size + 1, np.Infinity, dtype = np.float32)
+        cost = np.full(2 * r_size + 1, np.Infinity, dtype=np.float32)
+        cost_prev = np.full(2 * r_size + 1, np.Infinity, dtype=np.float32)
         m = len(series)
         k = 0
         for i in range(0, m):
@@ -47,14 +48,15 @@ class DynamicTimeWarping:
                     if i - 1 < 0 or k + 1 > 2 * r_size:
                         x = np.Infinity
                     else:
-                        x = cost_prev[k + 1];
+                        x = cost_prev[k + 1]
 
                     if i - 1 < 0 or j - 1 < 0:
                         z = np.Infinity
                     else:
                         z = cost_prev[k]
 
-                    cost[k] = np.min(np.min(x, y), z) + self.dist(series1[i], series2[j])
+                    cost[k] = np.min(np.min(x, y), z) + self.dist(
+                        series1[i], series2[j])
                     if cost[k] < min_cost:
                         min_cost = cost[k]
                 k += 1

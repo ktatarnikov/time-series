@@ -1,6 +1,7 @@
+import numpy as np
 from scipy.stats import norm
 from sklearn.preprocessing import StandardScaler
-import numpy as np
+
 
 class SAX:
     '''
@@ -16,13 +17,15 @@ class SAX:
     window_size: int
         the size of sliding window in points
     '''
-    def __init__(self, alpha, paa_size = None, window_size = None):
+    def __init__(self, alpha, paa_size=None, window_size=None):
         self.alpha = alpha
         self.window_size = window_size
         self.paa_size = paa_size
         # 1/(α −1),2/(α −1),...,(α −2)/(α −1)
         # (for α = 3, breakpoints = [−0.43,0.43]; for α = 4, breakpoints = [−0.67,0,0.67])
-        self.breakpoints = [norm.ppf(float(i)/float(alpha)) for i in range(1, alpha)]
+        self.breakpoints = [
+            norm.ppf(float(i) / float(alpha)) for i in range(1, alpha)
+        ]
         self.symbols = "abcdefghijklmnopqrstuvwxyz"
 
     def encode(self, series: np.array):
@@ -46,7 +49,7 @@ class SAX:
         """
         result = []
         for i in range(0, len(series) - self.window_size + 1, 1):
-            window = series[i : (i + self.window_size)]
+            window = series[i:(i + self.window_size)]
             result.append(window)
         return np.array(result)
 

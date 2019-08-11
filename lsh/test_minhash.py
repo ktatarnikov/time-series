@@ -1,7 +1,10 @@
 import unittest
+
 import numpy as np
 from numpy import testing
+
 from .minhash import Minhash
+
 
 class MinhashTest(unittest.TestCase):
     def test_different_objects(self):
@@ -58,6 +61,8 @@ class MinhashTest(unittest.TestCase):
 
     def test_weighted_the_same_objects_different_weights(self):
         minhash = Minhash()
-        hashes1 = minhash.weighted_minhash([[10, 0], [11, 0], [12, 1], [13, 0], [14, 1], [15, 0]], 20)
-        hashes2 = minhash.weighted_minhash([[10, 1], [11, 2], [12, 0], [13, 1], [14, 0], [15, 1]], 20)
+        hashes1 = minhash.weighted_minhash(
+            [[10, 0], [11, 0], [12, 1], [13, 0], [14, 1], [15, 0]], 20)
+        hashes2 = minhash.weighted_minhash(
+            [[10, 1], [11, 2], [12, 0], [13, 1], [14, 0], [15, 1]], 20)
         testing.assert_equal(0.0, minhash.weighted_jaccard(hashes1, hashes2))

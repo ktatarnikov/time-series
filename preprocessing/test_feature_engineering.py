@@ -1,13 +1,14 @@
-import unittest
 import tempfile
+import unittest
+
 import numpy as np
-from numpy import testing
 import pandas as pd
+from numpy import testing
 from sklearn.preprocessing import StandardScaler
 
-from preprocessing.preprocessing import TimeSeriesPreprocessor
 from preprocessing.feature_engineering import TimeSeriesFeatureEngineering
 from preprocessing.helper import TimeseriesHelper
+from preprocessing.preprocessing import TimeSeriesPreprocessor
 from preprocessing.test_common import make_labels, make_series
 
 

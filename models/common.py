@@ -1,4 +1,3 @@
-
 class HyperParams:
     '''
     Model training hyper parameters.

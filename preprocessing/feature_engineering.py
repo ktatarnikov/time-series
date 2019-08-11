@@ -1,18 +1,18 @@
+import logging
 import os
 import sys
-import pandas as pd
-import numpy as np
+from datetime import date
+from datetime import timedelta as td
+
 import matplotlib.pyplot as plt
-import logging
-
+import numpy as np
+import pandas as pd
 import tsfresh
-from tsfresh.feature_selection.selection import select_features
-from tsfresh.utilities.dataframe_functions import impute
-
 from imblearn.over_sampling import SMOTE
-from datetime import date, timedelta as td
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
+from tsfresh.feature_selection.selection import select_features
+from tsfresh.utilities.dataframe_functions import impute
 
 
 class TimeSeriesFeatureEngineering:
@@ -39,16 +39,22 @@ class TimeSeriesFeatureEngineering:
         self.smote_neighbours = 3
         self.smote_ratio = 1.0
         # Muting feature selection warnings
-        logging.getLogger("tsfresh.feature_selection.significance_tests").setLevel(logging.ERROR)
-        logging.getLogger("tsfresh.feature_selection.relevance").setLevel(logging.ERROR)
-        logging.getLogger("tsfresh.utilities.dataframe_functions").setLevel(logging.ERROR)
+        logging.getLogger(
+            "tsfresh.feature_selection.significance_tests").setLevel(
+                logging.ERROR)
+        logging.getLogger("tsfresh.feature_selection.relevance").setLevel(
+            logging.ERROR)
+        logging.getLogger("tsfresh.utilities.dataframe_functions").setLevel(
+            logging.ERROR)
 
     def make_features(self, frame):
         frame.sort_values(by=[self.ts_variable], inplace=True)
         rolled_frame = self.roll_dataset(frame, self.y_column)
         labels = self.aggregate_labels(rolled_frame, self.y_column)
-        features_frame = self.extract(rolled_frame, labels, self.x_columns,self.y_column)
-        features_frame[self.y_column] = labels.loc[features_frame.index][self.y_column]
+        features_frame = self.extract(rolled_frame, labels, self.x_columns,
+                                      self.y_column)
+        features_frame[self.y_column] = labels.loc[features_frame.index][
+            self.y_column]
         return features_frame
 
     def extract(self, frame, labels, x_columns, y_column):

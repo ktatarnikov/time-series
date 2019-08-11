@@ -1,9 +1,8 @@
 import pandas as pd
+from numpy.random import seed
+from tensorflow import set_random_seed
 
 import xgboost as xgb
-from numpy.random import seed
-
-from tensorflow import set_random_seed
 
 
 class XGBoostModel:

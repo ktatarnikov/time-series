@@ -1,9 +1,11 @@
 import os
 import sys
-import pandas as pd
-import numpy as np
+from datetime import date
+from datetime import timedelta as td
+
 import matplotlib.pyplot as plt
-from datetime import date, timedelta as td
+import numpy as np
+import pandas as pd
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
@@ -225,7 +227,6 @@ class TimeSeriesPreprocessor:
         if self.scaler is not None:
             series[numeric_vars] = self.scaler.fit_transform(
                 series[numeric_vars])
-            # (series[numeric_vars] - series[numeric_vars].mean())/series[numeric_vars].std(ddof=0)
         return series
 
     def time_alignment(self, series, input_variables, output_variables):

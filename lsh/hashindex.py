@@ -1,4 +1,3 @@
-
 class HashIndex:
     '''
     HashIndex that is
@@ -8,7 +7,7 @@ class HashIndex:
     hash_tables : int
         the number of hashtables in the index
     '''
-    def __init__(self, hash_tables = 128):
+    def __init__(self, hash_tables=128):
         self.hash_tables = hash_tables
         self.hash = [{} for _ in range(hash_tables)]
         self.objects = []
