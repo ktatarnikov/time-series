@@ -1,8 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os.path
 import json
-from sklearn.metrics import confusion_matrix, precision_recall_curve
+from sklearn.metrics import confusion_matrix, precision_recall_curve, precision_score
 from sklearn.metrics import recall_score, classification_report, auc, roc_curve
 from sklearn.metrics import precision_recall_fscore_support, f1_score
 from sklearn.metrics import average_precision_score
@@ -118,7 +119,6 @@ class TimeseriesHelper:
         idx = 0
         total = len(df_map)
         fig, axes = plt.subplots(total, 1, squeeze=False, figsize=figsize)
-        fig
         for name, df in df_map.items():
             ax = axes[idx][0]
             self.plot_metric(data_frame=df, name=name, ax=ax, figsize=figsize)
@@ -166,12 +166,21 @@ class TimeseriesHelper:
             - self.label_variable ('label') as label column
             - self.ts_variable ('timestamp') as timestamp column.
         '''
-        data_frame = pd.read_csv(f"data/NAB/{series_path}").rename(
-            columns={"value": "y"})
+
+        file_name = f"data/NAB/{series_path}"
+        if not os.path.isfile(file_name):
+            file_name = f"../{file_name}"
+            if not os.path.isfile(file_name):
+                raise Exception(f"File {series_path} not found.")
+        data_frame = pd.read_csv(file_name).rename(columns={"value": "y"})
         data_frame['timestamp'] = pd.to_datetime(data_frame['timestamp'],
                                                  infer_datetime_format=True)
-
-        labels_json = self._load("labels/combined_labels.json")
+        labels_file = "labels/combined_labels.json"
+        if not os.path.isfile(labels_file):
+            labels_file = f"../{labels_file}"
+            if not os.path.isfile(labels_file):
+                raise Exception(f"File {labels_file} not found.")
+        labels_json = self._load(labels_file)
         labels = json.loads(labels_json)
         label_timestamps = set(
             [pd.Timestamp(ts) for ts in labels[series_path]])
@@ -212,14 +221,52 @@ class TimeseriesHelper:
         return grouped_by_hour
 
     def evaluate(self, Y_actual, Y_predicted):
+        '''
+        Evaluates actual vs predicted.
+
+        Parameters
+        ----------
+        Y_actual : actual classes
+        Y_predicted: predicted classes
+
+        Returns
+        -------
+            dict of metrics containing
+                - confusion_matrix
+                - average_precision_score
+                - f1_score
+                - precision
+                - recall
+        '''
         results = {}
         results["confusion_matrix"] = confusion_matrix(Y_actual, Y_predicted)
         results["average_precision_score"] = average_precision_score(
             Y_actual, Y_predicted, average="macro")
         results["f1_score"] = f1_score(Y_actual, Y_predicted, pos_label=1.0)
+        results["precision"] = precision_score(Y_actual, Y_predicted, pos_label=1.0)
+        results["recall"] = recall_score(Y_actual, Y_predicted, pos_label=1.0)
         return results
 
     def print_results(self, context, results):
+        '''
+        Print metrics with corresponding context
+
+        Parameters
+        ----------
+        context : str
+            header of the metric group
+
+        results:
+            dict of metrics containing
+                - confusion_matrix
+                - average_precision_score
+                - f1_score
+                - precision
+                - recall
+        Returns
+        -------
+        '''
+
         print(f"\n{context} metrics:")
         print("confusion matrix: ")
         print(results["confusion_matrix"])

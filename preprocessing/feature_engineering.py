@@ -7,6 +7,7 @@ import logging
 
 import tsfresh
 from tsfresh.feature_selection.selection import select_features
+from tsfresh.utilities.dataframe_functions import impute
 
 from imblearn.over_sampling import SMOTE
 from datetime import date, timedelta as td
@@ -36,22 +37,18 @@ class TimeSeriesFeatureEngineering:
         self.roll_shift = roll_shift
         self.random_state = 42
         self.smote_neighbours = 3
-        self.smote_ratio = 0.3
+        self.smote_ratio = 1.0
         # Muting feature selection warnings
-        logging.getLogger(
-            "tsfresh.feature_selection.significance_tests").setLevel(
-                logging.ERROR)
-        logging.getLogger("tsfresh.feature_selection.relevance").setLevel(
-            logging.ERROR)
+        logging.getLogger("tsfresh.feature_selection.significance_tests").setLevel(logging.ERROR)
+        logging.getLogger("tsfresh.feature_selection.relevance").setLevel(logging.ERROR)
+        logging.getLogger("tsfresh.utilities.dataframe_functions").setLevel(logging.ERROR)
 
     def make_features(self, frame):
         frame.sort_values(by=[self.ts_variable], inplace=True)
         rolled_frame = self.roll_dataset(frame, self.y_column)
         labels = self.aggregate_labels(rolled_frame, self.y_column)
-        features_frame = self.extract(rolled_frame, labels, self.x_columns,
-                                      self.y_column)
-        features_frame[self.y_column] = labels.iloc[features_frame.index][
-            self.y_column]
+        features_frame = self.extract(rolled_frame, labels, self.x_columns,self.y_column)
+        features_frame[self.y_column] = labels.loc[features_frame.index][self.y_column]
         return features_frame
 
     def extract(self, frame, labels, x_columns, y_column):
@@ -60,8 +57,7 @@ class TimeSeriesFeatureEngineering:
                                             column_id='tsfresh_id',
                                             column_sort='sort',
                                             disable_progressbar=True)
-        features = features.mask(np.isinf(features))
-        features.fillna(value=0, inplace=True)
+        impute(features)
         selected_features = select_features(features,
                                             labels[y_column],
                                             ml_task="classification")
@@ -85,10 +81,10 @@ class TimeSeriesFeatureEngineering:
         the_max_class.set_index(keys="tsfresh_id", inplace=True)
         return the_max_class
 
-    def class_imbalance_fix(self, X, Y):
+    def class_imbalance_fix(self, X, Y, ratio=None):
         smote = SMOTE( \
             random_state = self.random_state, \
             k_neighbors = self.smote_neighbours, \
-            sampling_strategy = self.smote_ratio)
+            sampling_strategy = self.smote_ratio if ratio is None else ratio)
         X_res, Y_res = smote.fit_sample(X, Y)
         return X_res, Y_res
