@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from numpy import testing
 
-from .similarity import TimeSeriesLSH
+from lsh.similarity import TimeSeriesLSH
 
 
 class TimeSeriesLSHTest(unittest.TestCase):

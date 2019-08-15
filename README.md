@@ -17,19 +17,19 @@ The tiny collection of algorithms to work with time series.
 - LSTM Autoencoder
   https://blog.keras.io/building-autoencoders-in-keras.html
 
-- Gradient Boosting tree
-  https://blog.keras.io/building-autoencoders-in-keras.html
+- Gradient Boosting tree model
+  https://xgboost.readthedocs.io/en/latest/
 
 - Preprocessing and Feature Engineering tools
+-- tsfresh https://tsfresh.readthedocs.io/en/latest/
+-- imbalance learn https://imbalanced-learn.readthedocs.io/en/stable/
 
 # Installation
 
 - git clone ...
 - pip install -r requirements.txt
 
-# Usage
-
-
-# Known Bugs
-
-# FAQ
+# Notebooks
+ - Anomaly Classification
+ - Timeseries Similarity
+ - SAX Anomaly

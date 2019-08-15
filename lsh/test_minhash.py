@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from numpy import testing
 
-from .minhash import Minhash
+from lsh.minhash import Minhash
 
 
 class MinhashTest(unittest.TestCase):
