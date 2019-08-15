@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from numpy import testing
 
-from .sequitur import Sequitur
+from motif.sequitur import Sequitur
 
 
 class TestSequitur(unittest.TestCase):

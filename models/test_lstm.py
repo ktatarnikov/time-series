@@ -34,8 +34,8 @@ class LSTMAutoencoderTest(unittest.TestCase):
             numeric_vars=["y"],
             auto_impute=["y", 'label'])
 
-        input = np.stack([w[0].to_numpy() for w in windows])
-        output = np.stack([w[1].to_numpy() for w in windows])
+        input = np.stack([w[0].values for w in windows])
+        output = np.stack([w[1].values for w in windows])
 
         n_in_features = len(input_variables)
         n_out_features = len(output_variables)

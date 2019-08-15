@@ -4,8 +4,8 @@ import unittest
 import numpy as np
 from numpy import testing
 
-from .sequitur import Sequitur
-from .sequitur_anomaly import SequiturAnomaly
+from motif.sequitur import Sequitur
+from motif.sequitur_anomaly import SequiturAnomaly
 
 
 class TestSequiturAnomaly(unittest.TestCase):

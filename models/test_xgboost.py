@@ -91,3 +91,4 @@ class XGBoostIntegrationTest(unittest.TestCase):
         y_test_pred = model.predict(X_test.as_matrix())
         evaluation_result = helper.evaluate(y_test, y_test_pred)
         helper.print_results("Test", evaluation_result)
+        self.assertGreater(evaluation_result["f1_score"], 0.0)

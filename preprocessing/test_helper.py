@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from numpy import testing
 
-from .helper import TimeseriesHelper
-from .test_common import make_labels, make_series
+from preprocessing.helper import TimeseriesHelper
+from preprocessing.test_common import make_labels, make_series
 
 
 class TimeseriesHelperTest(unittest.TestCase):

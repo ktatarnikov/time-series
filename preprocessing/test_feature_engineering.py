@@ -8,7 +8,6 @@ from sklearn.preprocessing import StandardScaler
 
 from preprocessing.feature_engineering import TimeSeriesFeatureEngineering
 from preprocessing.helper import TimeseriesHelper
-from preprocessing.preprocessing import TimeSeriesPreprocessor
 from preprocessing.test_common import make_labels, make_series
 
 

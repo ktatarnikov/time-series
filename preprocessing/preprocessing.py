@@ -6,7 +6,6 @@ from datetime import timedelta as td
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
 
@@ -83,7 +82,7 @@ class TimeSeriesPreprocessor:
             input_mask = (result[self.ts_variable] >=
                           start) & (result[self.ts_variable] < end)
             input_cut = result.loc[input_mask].copy()
-            input = input_cut[input_vars].to_numpy()
+            input = input_cut[input_vars].values
 
             input_start = start - output_duration
             # iterate over predictions recursively feeding the output to the input

@@ -78,8 +78,8 @@ class TimeSeriesLSHTest(unittest.TestCase):
             print(
                 f"idx: {item['object']['idx']}, similarity: {item['similarity']}."
             )
-        # testing.assert_array_equal([ 0.51, -0.49, -0.3 ,  0.11, -0.91,  1.31,  0.41,  1.29, -0.49,
-        #   0.51, -0.49, -0.55,  0.12], related)
+        actual = [r['object']['idx'] for r in related]
+        testing.assert_array_equal(actual, [7, 2, 6, 5, 1, 4, 0, 3])
 
     def series(self, array):
         index = pd.date_range('1/1/2011', periods=len(array), freq='m')

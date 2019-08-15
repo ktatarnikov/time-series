@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from numpy import testing
 
-from .helper import TimeseriesHelper
-from .preprocessing import TimeSeriesPreprocessor
-from .test_common import make_labels, make_series
+from preprocessing.helper import TimeseriesHelper
+from preprocessing.preprocessing import TimeSeriesPreprocessor
+from preprocessing.test_common import make_labels, make_series
 
 
 class TimeSeriesPreprocessorTest(unittest.TestCase):

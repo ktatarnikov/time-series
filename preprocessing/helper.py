@@ -11,14 +11,6 @@ from sklearn.metrics import (auc, average_precision_score,
                              recall_score, roc_curve)
 
 
-def flatten(X):
-    flattened_X = np.empty(
-        (X.shape[0], X.shape[2]))  # sample x features array.\n",
-    for i in range(X.shape[0]):
-        flattened_X[i] = X[i, (X.shape[1] - 1), :]
-    return (flattened_X)
-
-
 class TimeseriesHelper:
     '''
     Time series helper.

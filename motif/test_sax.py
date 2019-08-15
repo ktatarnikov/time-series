@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from numpy import testing
 
-from .sax import SAX
+from motif.sax import SAX
 
 
 class TestSAX(unittest.TestCase):
