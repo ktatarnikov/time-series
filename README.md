@@ -28,7 +28,8 @@ The tiny collection of algorithms to work with time series.
 
 - git clone ...
 - pip install -r requirements.txt
-
+ - run `jupyter notebook`
+ 
 # Notebooks
 
  - Anomaly Classification (notebooks/Classification of Anomalous TimeSeries.ipynb)
